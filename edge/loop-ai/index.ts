@@ -1,6 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
+// Server key: older projects expose SUPABASE_SERVICE_ROLE_KEY, newer ones SUPABASE_SECRET_KEYS (JSON).
+function serverKey(): string {
+  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacy) return legacy;
+  try { const j = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}"); return j.default || Object.values(j)[0] as string || ""; } catch { return ""; }
+}
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -90,7 +97,7 @@ Deno.serve(async (req) => {
   if (!key) return json({ error: "not_configured", message: "The AI key hasn't been added yet." }, 503);
 
   const token = (req.headers.get("Authorization") || "").replace("Bearer ", "");
-  const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const admin = createClient(Deno.env.get("SUPABASE_URL")!, serverKey());
   const { data: u, error: ue } = await admin.auth.getUser(token);
   if (ue || !u?.user) return json({ error: "auth", message: "Sign in to talk to Loopy." }, 401);
   const uid = u.user.id;

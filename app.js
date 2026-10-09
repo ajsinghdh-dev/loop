@@ -1,7 +1,7 @@
 /* Loop — study app. Vanilla JS, Supabase for accounts + sync + shared courses. */
 (function(){
 'use strict';
-const sb = window.supabase.createClient('https://zycvparzzdprrdmrcsdf.supabase.co','sb_publishable_ByUhbUzYcepWUwgmO0LbkQ_-Cl0hA8-',{auth:{persistSession:true,storageKey:'loop-auth'}});
+const sb = window.supabase.createClient('https://rlgmwjkjbctcrarxmzhs.supabase.co','sb_publishable_VCzRUWAzrWjLN1E9Y7k6Uw_9UDWKlkP',{auth:{persistSession:true,storageKey:'loop-auth-v2'}});
 
 /* ---------------- helpers ---------------- */
 const $=s=>document.querySelector(s);

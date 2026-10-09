@@ -9,7 +9,7 @@ select cron.schedule(
   '*/5 * * * *',
   $$
   select net.http_post(
-    url := 'https://zycvparzzdprrdmrcsdf.supabase.co/functions/v1/loop-push',
+    url := 'https://rlgmwjkjbctcrarxmzhs.supabase.co/functions/v1/loop-push',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || '<ANON_KEY>',
