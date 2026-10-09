@@ -455,6 +455,8 @@ function renderCourse(){
  ${(c.exams||[]).map(e=>{const d=dayDiff(e.date,todayStr());return `<div class="card row between" style="margin-top:14px;padding:16px 20px"><div><div style="font-weight:600">${esc(e.name)}</div><div class="muted" style="font-size:14px">${fmtDate(e.date,{weekday:'short',month:'short',day:'numeric'})}${d>=0&&!s.empty&&readiness(c,e)?` · ${readinessLine(c,e,true)}`:''}</div>${d>=0&&!s.empty?(()=>{const g=dailyGoalFor(c,e),tg=e.target||S.settings.target||80;return `<div style="font-size:13px;margin-top:4px;font-weight:500;color:${g?'var(--lavd)':'var(--good)'}">${g?`🎯 About ${g} questions a day to reach your ${tg}% goal`:`✓ On track for your ${tg}% goal. Keep revising`}</div>`})():''}${d<0?`<label class="row actual" style="gap:8px;margin-top:8px;font-size:13px">Your actual grade <input class="field sm" type="number" min="0" max="100" inputmode="numeric" placeholder="%" value="${e.actual??''}" data-actual="${esc(examKey(c,e))}" style="width:84px;padding:6px 10px">%</label>`:''}</div><span class="tag ${d<0?'soon':d<=7?'behind':'new'}">${d<0?'done':d===0?'today':d+' days'}</span></div>`}).join('')}
  ${notebookCard(c)}
  <div style="margin-top:14px">${courseNotesCard(c)}</div>
+ <div class="grid2" style="margin-top:14px">${gradeCard(c)}${assignmentsCard(c)}</div>
+ ${weakSpots(c)?`<div style="margin-top:14px">${weakSpots(c)}</div>`:''}
  <div class="row between" style="margin-top:26px;margin-bottom:12px"><h2 style="margin:0">Topics</h2><button class="btn light" style="padding:10px 16px;font-size:14px" data-addq="${c.id}">${ICON.plus} Add questions</button></div>
  <div class="stack">
  ${c.topics.length?c.topics.map(t=>{const st=topicStatus(t),n=isGen(t.id)?'∞':(QBYT[t.id]||[]).length;return `<div class="topic">${ring(st.m,colVar[c.color])}<div style="flex:1;min-width:0"><div class="nm">${esc(t.name)}</div><div class="muted" style="font-size:12px">${fmtDate(t.date)} · ${n} question${n===1?'':'s'}</div></div><span class="tag ${st.k}">${st.label}</span><button class="link known${(S.known||{})[t.id]?' on':''}" data-known="${t.id}" aria-pressed="${!!(S.known||{})[t.id]}" style="font-size:12px;white-space:nowrap">${(S.known||{})[t.id]?'✓ Known':'I know this'}</button>${hasContent(t.id)?`<button class="iconbtn" style="width:40px;height:40px;box-shadow:none;background:var(--bg)" data-revise="${t.id}" aria-label="Practise ${esc(t.name)}">${ICON.arrow}</button>`:''}</div>`}).join(''):'<p class="muted">No topics yet. Use edit to add some.</p>'}
@@ -617,6 +619,8 @@ function renderStats(){
  </div>
  <div class="ccard c-mint row" style="margin-top:14px;cursor:default;gap:14px"><div style="font-size:34px" aria-hidden="true">🏆</div><div><b style="font-weight:600">${total?`${Math.round(ok/total*100)}% accuracy`:'No answers yet'}</b><div style="font-size:13px;opacity:.75">${total} questions answered · ${S.xp} XP · best streak ${Math.max(S.best,streak())} day${Math.max(S.best,streak())===1?'':'s'}</div></div></div>
  ${predVsActual()}
+ <div class="grid2">${weekGoalCard()}${heatmap()}</div>
+ <div style="height:14px"></div>${sessionsCard()}
  ${weekReview()}
  <h2>Calibration</h2>
  ${calibCard(null)}
@@ -655,6 +659,7 @@ function renderMe(){
   <div class="topic"><div style="flex:1"><div class="nm">Sounds</div><div class="muted" style="font-size:12px">Little dings on right answers</div></div><button class="switch ${S.settings.sound?'on':''}" role="switch" aria-checked="${S.settings.sound}" data-set="sound" aria-label="Sounds"></button></div>
  </div>
  <div class="topic" style="margin-top:14px;flex-wrap:wrap"><div style="flex:1;min-width:140px"><div class="nm">Appearance</div><div class="muted" style="font-size:12px">Auto follows your Mac or phone</div></div><div class="seg" style="background:var(--bg)">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([k,l])=>`<button class="${(S.settings.theme||'auto')===k?'on':''}" data-theme="${k}">${l}</button>`).join('')}</div></div>
+ ${backupCard()}
  <h2>AI &amp; integrity</h2>
  <div class="topic" style="flex-wrap:wrap"><div style="flex:1;min-width:160px"><div class="nm">AI use receipt</div><div class="muted" style="font-size:12px">A record of every time you used Loopy (${(S.aiLog||[]).length} so far), with each course's AI setting. Handy if an instructor asks.</div></div><button class="btn light" style="background:var(--bg);padding:10px 16px;font-size:14px" data-act="aireceipt">⬇️ Download</button></div>
  <h2>Get the app</h2>
@@ -839,7 +844,9 @@ function drawBreak(el){
 }
 function drawDone(el){
  clearInterval(Q.tick);
- const ok=Q.res.filter(Boolean).length,n=Q.res.length,pct=n?ok/n:0,st=streak();S.best=Math.max(S.best,st);save();
+ const ok=Q.res.filter(Boolean).length,n=Q.res.length,pct=n?ok/n:0,st=streak();S.best=Math.max(S.best,st);
+ if(n&&!Q.logged){Q.logged=1;S.sessions=S.sessions||[];S.sessions.push({ts:Date.now(),title:Q.title||'Practice',n,ok});if(S.sessions.length>100)S.sessions.shift()}
+ save();
  const weak=[...new Set(Q.list.filter((q,i)=>Q.res[i]===false).map(q=>TOPIC[q.t]?.name))].filter(Boolean).slice(0,3);
  el.innerHTML=`<div style="margin:auto;text-align:center;max-width:400px;width:100%">${MASCOT(160,pct<.5&&n?'sad':'happy')}
   <h1 style="text-align:center;font-size:32px;margin-bottom:6px">${!n?'See you soon':pct>=.8?'Amazing!':pct>=.5?'Solid work!':'You showed up. That\'s the win'}</h1>
@@ -925,9 +932,12 @@ function renderToday(){
  <h2>Today</h2>
  <div class="agenda">${ev.length?ev.map(e=>{const past=e.start&&t2m(e.end||e.start)<nowM,now=e.start&&t2m(e.start)<=nowM&&t2m(e.end||e.start)>=nowM;return `<div class="arow ${past?'past':''} ${now?'now':''}" ${e.readonly?(e.app?`data-editapp="${e.app}"`:e.course?`data-course="${e.course}"`:''):`data-editev="${e.id}"`}><div class="atime">${e.start?fmtTime(e.start):'All day'}${e.end?`<small>${fmtTime(e.end)}</small>`:''}</div><div class="abar c-${evColor(e)}"></div><div style="flex:1;min-width:0"><div class="nm1">${KIND[e.kind]?.e||''} ${esc(e.title)}</div><div class="muted" style="font-size:12px">${[e.location&&'📍 '+e.location,e.calName].filter(Boolean).map(esc).join(' · ')||KIND[e.kind]?.l||''}</div></div>${now?'<span class="tag ok">now</span>':''}</div>`}).join(''):`<div class="card empty" style="padding:22px"><p class="muted" style="margin:0">Nothing scheduled today. ${S.events.length?'Enjoy the free time, or block a study session.':'Add your timetable to see your day here.'}</p><div class="row" style="justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn light" style="background:var(--card)" data-act="newevent">${ICON.plus} Add event</button><button class="btn" data-act="aiimport">✨ Paste timetable</button></div></div>`}</div>
  ${doneTodayCard()}
+ ${examChecklist()}
+ ${dueSoonCard()}
  ${S.courses.length?`<div style="margin-top:14px">${nextActionCard()}</div>`:''}
  <div style="margin-top:14px">${inboxCard()}</div>
  <div style="margin-top:14px">${moodCard()}</div>
+ ${tipCard()}
  ${S.courses.length?`<h2>Study</h2>
  <div class="grid2">
   <div class="ccard c-lav" data-act="daily" role="button" tabindex="0"><div class="row between"><div class="glyph">⚡</div><span class="chip">${Math.min(today.n,goal)}/${goal}</span></div><div style="font-size:18px;font-weight:600;margin:12px 0 10px">${today.n>=goal?'Goal done! Bonus round?':'Daily practice · 5 min'}</div><div class="bar"><i data-w="${Math.min(100,today.n/goal*100)}%" style="width:0;background:var(--lavd)"></i></div></div>
@@ -1514,6 +1524,112 @@ function weekReview(){
  return `<div class="card weekrev"><div class="row between"><b style="font-weight:600">Week in review</b><button class="link" data-copyweek="1" style="font-size:13px">Copy summary</button></div><ul style="margin:10px 0 0;padding-left:18px;line-height:1.7;font-size:14px">${lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`;
 }
 
+/* ======================= Batch 3: grades, assignments, heatmap, sessions, backup and more ======================= */
+// 1. Grade calculator
+function gradesOf(cid){S.grades=S.grades||{};return S.grades[cid]=S.grades[cid]||[]}
+function gradeSummary(cid,target){
+ const G=gradesOf(cid).filter(g=>+g.weight>0);
+ const done=G.filter(g=>g.score!==''&&g.score!=null&&!isNaN(+g.score));
+ const wDone=done.reduce((a,g)=>a+ +g.weight,0),earned=done.reduce((a,g)=>a+ +g.weight*+g.score/100,0);
+ const wAll=G.reduce((a,g)=>a+ +g.weight,0),wLeft=Math.max(0,wAll-wDone);
+ const current=wDone?earned/wDone*100:null;
+ const needed=wLeft?(target*wAll/100-earned)/wLeft*100:null;
+ return {current,needed,wDone,wAll,wLeft,earned};
+}
+function gradeCard(c){
+ const G=gradesOf(c.id),e=nextExam(c),target=(e&&e.target)||S.settings.target||80,s=gradeSummary(c.id,target);
+ const msg=s.current==null?'Add your assessments and their weights from the syllabus.':
+  s.wLeft<=0?`Final grade so far: ${s.current.toFixed(1)}%.`:
+  s.needed>100?`To reach ${target}%, you'd need ${s.needed.toFixed(0)}% on the remaining ${s.wLeft}%. Worth talking to your prof about options.`:
+  s.needed<=0?`You've already secured ${target}% even with 0 on the rest. Nice.`:
+  `To finish at ${target}%, you need about ${s.needed.toFixed(0)}% on the remaining ${s.wLeft}% of the course.`;
+ return `<div class="card gradecard"><div class="row between"><b style="font-weight:600">Grade calculator</b>${s.current!=null?`<span class="chip" style="background:var(--lav)">Now ${s.current.toFixed(1)}%</span>`:''}</div>
+  <p class="muted" style="font-size:13px;margin:6px 0 10px">${esc(msg)}</p>
+  <div class="grows">${G.map(g=>`<div class="grow"><input class="field sm" data-gr="${c.id}|${g.id}|name" value="${esc(g.name)}" placeholder="e.g. Midterm" aria-label="Assessment name"><input class="field sm" type="number" min="0" max="100" data-gr="${c.id}|${g.id}|weight" value="${esc(g.weight)}" placeholder="Weight %" aria-label="Weight percent"><input class="field sm" type="number" min="0" max="100" data-gr="${c.id}|${g.id}|score" value="${esc(g.score??'')}" placeholder="Mark %" aria-label="Mark percent"><button class="x" data-grdel="${c.id}|${g.id}" aria-label="Remove">${ICON.x}</button></div>`).join('')}</div>
+  <div class="row between" style="margin-top:8px"><button class="btn light" style="background:var(--bg);padding:9px 14px;font-size:13px" data-gradd="${c.id}">${ICON.plus} Add assessment</button><span class="muted" style="font-size:12px">${s.wAll?`Weights add to ${s.wAll}%`:''}${s.wAll&&s.wAll!==100?' (should be 100)':''}</span></div></div>`;
+}
+// 2. Assignments
+const tasks=()=>S.tasks||(S.tasks=[]);
+function dueLabel(d){const n=dayDiff(d,todayStr());return n<0?`${-n}d overdue`:n===0?'Due today':n===1?'Due tomorrow':`Due in ${n}d`}
+function taskRow(t){const c=S.courses.find(x=>x.id===t.cid),n=dayDiff(t.due,todayStr());
+ return `<div class="mini" style="cursor:default"><button class="iconbtn sm tchk ${t.done?'on':''}" data-tdone="${t.id}" aria-label="${t.done?'Mark not done':'Mark done'}" style="width:30px;height:30px">${t.done?'✓':''}</button><div style="flex:1;min-width:0"><div class="nm1" style="${t.done?'text-decoration:line-through;opacity:.55':''}">${esc(t.title)}</div><div style="font-size:12px;color:${!t.done&&n<0?'var(--bad)':!t.done&&n<=2?'var(--peachd)':'var(--muted)'}">${c?c.emoji+' '+esc(c.code||c.name)+' · ':''}${t.done?'Done':dueLabel(t.due)}</div></div><button class="link muted2" data-tdel="${t.id}" style="font-size:12px">remove</button></div>`}
+function assignmentsCard(c){
+ const L=tasks().filter(t=>t.cid===c.id).sort((a,b)=>(a.done-b.done)||a.due.localeCompare(b.due));
+ return `<div class="card"><b style="font-weight:600">Assignments</b>
+  <form class="row taskform" data-taskform="${c.id}" style="gap:8px;margin-top:10px;flex-wrap:wrap"><input class="field sm" name="title" placeholder="e.g. Lab report 2" maxlength="120" style="flex:2;min-width:150px" aria-label="Assignment"><input class="field sm" type="date" name="due" value="${addDays(todayStr(),7)}" style="flex:1;min-width:140px" aria-label="Due date"><button class="btn" style="padding:12px 16px" type="submit">Add</button></form>
+  <div class="stack" style="gap:6px;margin-top:10px">${L.map(taskRow).join('')||'<p class="muted" style="font-size:13px;margin:0">No assignments yet.</p>'}</div></div>`;
+}
+function dueSoonCard(){
+ const t=todayStr(),L=tasks().filter(x=>!x.done&&dayDiff(x.due,t)<=7).sort((a,b)=>a.due.localeCompare(b.due));
+ if(!L.length)return '';
+ return `<div class="card" style="margin-top:14px"><div class="row between"><b style="font-weight:600">Due soon</b><span class="muted" style="font-size:12px">${L.length} in the next 7 days</span></div><div class="stack" style="gap:6px;margin-top:10px">${L.slice(0,5).map(taskRow).join('')}</div></div>`;
+}
+// 3. Practice heatmap (12 weeks)
+function heatmap(){
+ const t=todayStr(),start=addDays(weekStartMon(t),-77),cells=[];
+ for(let i=0;i<84;i++){const d=addDays(start,i),n=S.log[d]?.n||0,lvl=d>t?-1:n===0?0:n<5?1:n<10?2:n<20?3:4;cells.push(`<i class="hm l${lvl}" title="${fmtDate(d)}: ${n} question${n===1?'':'s'}"></i>`)}
+ const days=Object.keys(S.log).filter(d=>d>=start&&S.log[d].n>0).length;
+ return `<div class="card"><div class="row between"><b style="font-weight:600">Practice heatmap</b><span class="muted" style="font-size:12px">${days} active day${days===1?'':'s'} in 12 weeks</span></div><div class="heat" role="img" aria-label="Practice over the last 12 weeks">${cells.join('')}</div><div class="row" style="gap:6px;justify-content:flex-end;margin-top:8px;font-size:11px" aria-hidden="true"><span class="muted">Less</span>${[0,1,2,3,4].map(l=>`<i class="hm l${l}"></i>`).join('')}<span class="muted">More</span></div></div>`;
+}
+function weekStartMon(d){const x=new Date(d+'T12:00'),w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x.toLocaleDateString('en-CA')}
+// 4. Session history
+function sessionsCard(){
+ const L=(S.sessions||[]).slice(-8).reverse();if(!L.length)return '';
+ return `<div class="card"><b style="font-weight:600">Recent sessions</b><div class="stack" style="gap:6px;margin-top:10px">${L.map(s=>`<div class="row between" style="font-size:14px"><span>${esc(s.title||'Practice')} · <span class="muted">${new Date(s.ts).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</span></span><b style="font-weight:600;color:${s.n&&s.ok/s.n>=.7?'var(--good)':'var(--ink)'}">${s.ok}/${s.n}</b></div>`).join('')}</div></div>`;
+}
+// 6. Weekly goal
+function weekGoalCard(){
+ const g=S.settings.weekGoal||40,ws=weekStartMon(todayStr()),n=[...Array(7)].map((_,i)=>S.log[addDays(ws,i)]?.n||0).reduce((a,b)=>a+b,0),p=Math.min(1,n/g);
+ return `<div class="card"><div class="row between"><b style="font-weight:600">Weekly goal</b><div class="row" style="gap:4px">${[20,40,60].map(v=>`<button class="pill ${g===v?'on':''}" style="padding:5px 10px;font-size:12px" data-weekgoal="${v}">${v}</button>`).join('')}</div></div>
+  <div style="font-size:22px;font-weight:700;margin:8px 0 6px">${n} <span class="muted" style="font-size:14px;font-weight:500">/ ${g} questions this week</span></div><div class="bar"><i style="width:${p*100}%;background:var(--lavd)"></i></div>${p>=1?'<p style="font-size:13px;color:var(--good);margin:8px 0 0;font-weight:600">Weekly goal hit 🎉</p>':''}</div>`;
+}
+// 7. Tip of the day
+const TIPS=[
+ ['Test yourself first','Trying to recall something, even if you get it wrong, strengthens memory more than re-reading it.'],
+ ['Space it out','Three short sessions on different days beat one long session the night before.'],
+ ['Mix topics','Switching between topics in one session (interleaving) helps you tell similar ideas apart on the exam.'],
+ ['Explain it out loud','If you can explain an idea simply to someone else, you understand it. If you can\'t, you\'ve found the gap.'],
+ ['Sleep is study','Memories get consolidated while you sleep. An all-nighter costs you more than it gains.'],
+ ['Start tiny','Can\'t start? Commit to 2 minutes. Starting is the hard part; continuing is easy.'],
+ ['Make it concrete','Link every new idea to an example from your life or the news.'],
+ ['Check the why','After a wrong answer, figure out why the right answer is right before moving on.'],
+ ['Phone out of reach','Just having your phone visible on the desk can pull at your attention.'],
+ ['Plan the when and where','"I\'ll review ANTHRO at 4pm in the library" works far better than "I\'ll study later".'],
+ ['Use past papers','Practising in exam conditions is the closest rehearsal for the real thing.'],
+ ['Draw it','Sketching a diagram or flowchart of a process makes you organise what you know.'],
+ ['Short breaks','Take a 5-minute break every 25 to 30 minutes. Walk, stretch, drink water.'],
+ ['Don\'t highlight everything','Highlighting feels productive but does little on its own. Turn highlights into questions instead.'],
+];
+function tipCard(){const i=Math.floor(Date.now()/864e5)%TIPS.length,[h,b]=TIPS[i];
+ return `<div class="card tipcard" style="margin-top:14px"><div class="row between"><b style="font-weight:600">💡 Tip of the day</b><button class="btn" style="padding:8px 14px;font-size:13px" data-act="quick3">Quick 3 questions</button></div><div style="font-weight:600;margin-top:10px">${esc(h)}</div><p class="muted" style="font-size:13.5px;margin:4px 0 0;line-height:1.55">${esc(b)}</p></div>`}
+// 9. Exam-day checklist
+const EXAMCHECK=['Know the room and start time','Student card and ID packed','Pens, pencil, eraser, calculator (if allowed)','Water and a snack','Alarm set and a good night\'s sleep','Quick 10-minute review, not a cram'];
+function examChecklist(){
+ const t=todayStr(),up=S.courses.flatMap(c=>(c.exams||[]).map(e=>({c,e,d:dayDiff(e.date,t)}))).filter(x=>x.d>=0&&x.d<=1).sort((a,b)=>a.d-b.d)[0];
+ if(!up)return '';const k=examKey(up.c,up.e);S.examcheck=S.examcheck||{};const done=S.examcheck[k]||[];
+ return `<div class="card examcheck" style="margin-top:14px"><div class="row between"><b style="font-weight:600">📝 ${up.d===0?'Exam today':'Exam tomorrow'}: ${esc(up.c.code||up.c.name)}</b><span class="muted" style="font-size:12px">${done.filter(Boolean).length}/${EXAMCHECK.length}</span></div>
+  <div class="stack" style="gap:4px;margin-top:10px">${EXAMCHECK.map((l,i)=>`<label class="row" style="gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" data-ec="${esc(k)}|${i}" ${done[i]?'checked':''}> <span style="${done[i]?'text-decoration:line-through;opacity:.6':''}">${esc(l)}</span></label>`).join('')}</div></div>`;
+}
+// 10. Weak spots
+function weakSpots(c){
+ const L=c.topics.filter(t=>t.date<=todayStr()&&hasContent(t.id)&&seen(t.id)).map(t=>({t,m:topicMastery(t.id)})).filter(x=>x.m<0.7).sort((a,b)=>a.m-b.m).slice(0,3);
+ if(!L.length)return '';
+ return `<div class="card"><b style="font-weight:600">Weak spots</b><p class="muted" style="font-size:13px;margin:4px 0 10px">Your three lowest topics so far. A short round on each makes the biggest difference.</p><div class="stack" style="gap:6px">${L.map(x=>`<div class="mini" style="cursor:default"><span class="mem" style="color:var(--bad);font-weight:700;min-width:42px">${Math.round(x.m*100)}%</span><div class="nm1" style="flex:1">${esc(x.t.name)}</div><button class="btn" style="padding:8px 14px;font-size:13px" data-revise="${x.t.id}">Practise</button></div>`).join('')}</div></div>`;
+}
+// 8. Backup and restore
+function backupData(){
+ const blob=new Blob([JSON.stringify({app:'loop',v:S.v,exported:new Date().toISOString(),state:S},null,1)],{type:'application/json'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download=`loop-backup-${todayStr()}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast('Backup downloaded');
+}
+function restoreData(file){
+ const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result),st=j&&j.state?j.state:j;if(!st||!Array.isArray(st.courses))throw new Error('bad');
+  if(!confirmRestore())return;S=migrate(st);S.updated=Date.now();save();render();toast('Backup restored')}catch{toast('That file isn\'t a Loop backup')}};r.readAsText(file);
+}
+function confirmRestore(){return window.confirm('Restore this backup? It replaces everything currently in Loop on this device.')}
+function backupCard(){
+ return `<h2>Your data</h2><div class="topic" style="flex-wrap:wrap"><div style="flex:1;min-width:160px"><div class="nm">Backup &amp; restore</div><div class="muted" style="font-size:12px">Download everything as a file, or bring a backup back.</div></div><div class="row" style="gap:8px"><button class="btn light" style="background:var(--bg);padding:10px 14px;font-size:14px" data-act="backup">⬇️ Backup</button><label class="btn light" style="background:var(--bg);padding:10px 14px;font-size:14px;cursor:pointer">⬆️ Restore<input type="file" accept="application/json,.json" id="restorefile" hidden></label></div></div>`;
+}
+
 /* ======================= Phase E+F: readiness, autopilot, recovery ======================= */
 const examKey=(c,e)=>c.id+'|'+e.name+'|'+e.date;
 function examTopics(c,e){return c.topics.filter(t=>t.date<=e.date&&hasContent(t.id))}
@@ -1674,6 +1790,11 @@ function openPalette(){
 
 
 async function osClick(b,d,e){
+ if(d.gradd){gradesOf(d.gradd).push({id:uid('g_'),name:'',weight:'',score:''});save();render();return true}
+ if(d.grdel){const [cid,gid]=d.grdel.split('|');S.grades[cid]=gradesOf(cid).filter(g=>g.id!==gid);save();render();return true}
+ if(d.tdone){const t=tasks().find(x=>x.id===d.tdone);if(t){t.done=!t.done;save();render();if(t.done)toast('Done ✓')}return true}
+ if(d.tdel){S.tasks=tasks().filter(x=>x.id!==d.tdel);save();render();return true}
+ if(d.weekgoal){S.settings.weekGoal=+d.weekgoal;save();render();return true}
  if(d.sortby){view.sortBy=d.sortby;return render()}
  if(d.pin!==undefined){const P=pinsOf(),i=P.indexOf(d.pin);i>=0?P.splice(i,1):P.push(d.pin);save();render();return true}
  if(d.export!==undefined){const c=S.courses.find(x=>x.id===d.export);if(c)exportNotes(c);return true}
@@ -1713,6 +1834,8 @@ async function osClick(b,d,e){
   case 'closechat':closeChat();return true;
   case 'runresearch':runResearch();return true;
   case 'aireceipt':aiReceipt();return true;
+  case 'quick3':startQuiz(buildSet({n:3}),'Quick 3');return true;
+  case 'backup':backupData();return true;
   case 'pushon':enablePush();return true;
   case 'pushoff':disablePush();return true;
   case 'clearchat':S.chat=[];save();drawChat();return true;
@@ -1818,12 +1941,16 @@ document.addEventListener('click',async e=>{
   case 'signout':await sb.auth.signOut();return;
  }
 });
+document.addEventListener('submit',e=>{const f=e.target;if(!f||!f.dataset||!f.dataset.taskform)return;e.preventDefault();const title=(f.elements['title'].value||'').trim(),due=f.elements['due'].value||addDays(todayStr(),7);if(!title)return toast('Name the assignment');tasks().push({id:uid('t_'),title,cid:f.dataset.taskform,due,done:false});save();render();toast('Assignment added')});
 document.addEventListener('submit',e=>{if(e.target?.id!=='inboxform')return;e.preventDefault();const i=$('#inboxin'),v=(i?.value||'').trim();if(!v)return;S.inbox=S.inbox||[];S.inbox.unshift({id:uid('in_'),text:v,ts:Date.now()});S.inbox=S.inbox.slice(0,200);save();render();setTimeout(()=>$('#inboxin')?.focus(),30)});
 document.addEventListener('input',e=>{const el=e.target;if(el&&el.dataset&&el.dataset.cnote!==undefined){S.cnotes=S.cnotes||{};S.cnotes[el.dataset.cnote]=el.value;clearTimeout(window._cnT);window._cnT=setTimeout(()=>save(),400)}});
 document.addEventListener('keydown',e=>{if((e.key==='?'||(e.key==='/'&&e.shiftKey))&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'')&&!Q){e.preventDefault();shortcutsModal()}});
 document.addEventListener('change',e=>{
  const el=e.target;if(!el||!el.dataset)return;
  const find=k=>{for(const c of S.courses)for(const x of (c.exams||[]))if(examKey(c,x)===k)return x;return null};
+ if(el.dataset.gr){const [cid,gid,f]=el.dataset.gr.split('|'),g=gradesOf(cid).find(x=>x.id===gid);if(g){g[f]=f==='name'?el.value:(el.value===''?'':Math.max(0,Math.min(100,+el.value)));save();render()}}
+ if(el.dataset.ec){const [k,i]=[el.dataset.ec.slice(0,el.dataset.ec.lastIndexOf('|')),+el.dataset.ec.slice(el.dataset.ec.lastIndexOf('|')+1)];S.examcheck=S.examcheck||{};const L=S.examcheck[k]=S.examcheck[k]||[];L[i]=el.checked;save();render()}
+ if(el.id==='restorefile'&&el.files&&el.files[0]){restoreData(el.files[0]);el.value=''}
  if(el.dataset.pushtime){const P=pushPrefs();P[el.dataset.pushtime]=el.value||PUSHDEF[el.dataset.pushtime];S.settings.push=P;save();toast('Saved')}
  if(el.dataset.target){const x=find(el.dataset.target);if(x){x.target=+el.value;save();render();toast(`Goal set to ${el.value}%`)}}
  if(el.dataset.actual!==undefined){const x=find(el.dataset.actual);if(x){const v=el.value===''?null:Math.max(0,Math.min(100,+el.value));if(v==null)delete x.actual;else x.actual=v;save();toast(v==null?'Grade cleared':'Grade saved. Loop will learn from it')}}
