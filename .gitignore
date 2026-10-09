@@ -2,3 +2,5 @@ node_modules/
 *.bak.*
 .vercel/
 .DS_Store
+*.bak
+preview.html
