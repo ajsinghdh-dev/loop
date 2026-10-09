@@ -340,10 +340,20 @@ function renderAuth(){
    if(up){const nm=$('#an').value.trim();if(!nm){btn.disabled=false;btn.textContent='Sign up';return err.textContent='Add your first name.'}
     const {data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{name:nm},emailRedirectTo:location.origin}});if(error)throw error;
     S.name=S.name||nm;S.onboarded=true;save();
-    if(!data.session){err.style.color='var(--good)';err.textContent='Almost there! Check your email to confirm, then sign in here.';view.authMode='in';btn.disabled=false;btn.textContent='Sign up';return}}
+    if(!data.session){view.pendingEmail=em;showConfirmHelp(em);btn.disabled=false;btn.textContent='Sign up';return}}
    else{const {error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error}
-  }catch(x){err.textContent=/confirm/i.test(x.message)?'Please confirm your email first (check your inbox).':x.message||'Something went wrong';btn.disabled=false;btn.textContent=up?'Sign up':'Sign in'}
+  }catch(x){if(/confirm/i.test(x.message)){view.pendingEmail=em;showConfirmHelp(em,true)}else err.textContent=x.message||'Something went wrong';btn.disabled=false;btn.textContent=up?'Sign up':'Sign in'}
  };
+}
+function showConfirmHelp(em,notYet){
+ const box=$('#aerr');if(!box)return;box.style.color='var(--ink)';
+ box.innerHTML=`<div class="confirmhelp"><b>${notYet?'Your email isn\'t confirmed yet.':'Almost there! Confirm your email.'}</b>
+  <p>We sent a link to <b>${esc(em)}</b>. <b>Check your Junk or Spam folder</b>; it often lands there. It comes from <i>Supabase Auth</i>.</p>
+  <p>Found it in junk? Mark it "Not junk" so future emails arrive normally. Then tap the link and come back here to sign in.</p>
+  <button type="button" class="btn light" id="resendbtn" style="background:var(--bg);padding:9px 14px;font-size:13px">Resend email</button> <span class="muted" id="resendmsg" style="font-size:12px"></span></div>`;
+ $('#resendbtn').onclick=async()=>{const b=$('#resendbtn'),m=$('#resendmsg');b.disabled=true;m.textContent='Sending…';
+  try{const {error}=await sb.auth.resend({type:'signup',email:em,options:{emailRedirectTo:location.origin}});if(error)throw error;m.textContent='Sent. Check Junk too.';setTimeout(()=>{b.disabled=false},60000)}
+  catch(x){m.textContent=/rate|seconds|limit/i.test(x.message)?'Please wait a minute before resending.':(x.message||'Couldn\'t resend');b.disabled=false}};
 }
 function renderName(){
  root.innerHTML=`<div class="hero" style="background:var(--mint)"><div class="art">${MASCOT(190,'think')}</div><div class="sheet">
