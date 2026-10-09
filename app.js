@@ -292,13 +292,13 @@ function render(){
  root.innerHTML=`<div class="app">
   <aside class="side"><div class="brand">${MASCOT(36,'happy',false)} Loop</div>
    <button class="searchbtn" data-act="palette"><span class="row" style="gap:8px">${I('<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',18)} Search</span><kbd>⌘K</kbd></button>
-   ${tabs.map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!sub?'on':''}">${i}${l}</button>`).join('')}
+   ${tabs.map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!sub?'on':''}">${i}${l}${k==='study'&&dueCount()?`<span class="nbadge" aria-label="${dueCount()} reviews due">${dueCount()}</span>`:''}</button>`).join('')}
    <div style="margin-top:auto;display:grid;gap:8px"><button class="askbtn" data-act="ask">${MASCOT(34,'happy',false)}<span><b>Ask Loopy</b><small>AI sidekick</small></span></button><button class="btn full" data-act="daily">${ICON.bolt} Daily practice</button></div></aside>
   <main class="main" id="main">${signBar()}${body}</main></div>
   <nav class="nav" aria-label="Main">
-   ${tabs.slice(0,2).map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!sub?'on':''}">${i}${l}</button>`).join('')}
+   ${tabs.slice(0,2).map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!sub?'on':''}">${i}${l}${k==='study'&&dueCount()?`<span class="nbadge" aria-label="${dueCount()} reviews due">${dueCount()}</span>`:''}</button>`).join('')}
    <button class="mid" data-act="ask" aria-label="Ask Loopy">${MASCOT(44,'happy',false)}</button>
-   ${tabs.slice(2,4).map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!sub?'on':''}">${i}${l}</button>`).join('')}
+   ${tabs.slice(2,4).map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!sub?'on':''}">${i}${l}${k==='study'&&dueCount()?`<span class="nbadge" aria-label="${dueCount()} reviews due">${dueCount()}</span>`:''}</button>`).join('')}
   </nav>`;
  requestAnimationFrame(()=>{document.querySelectorAll('[data-w]').forEach(e=>e.style.width=e.dataset.w);document.querySelectorAll('[data-h]').forEach(e=>e.style.height=e.dataset.h)});
 }
@@ -458,6 +458,7 @@ function renderCourse(){
   <button class="btn" style="flex:1;min-width:140px" data-cram="${c.id}">${ICON.bolt} Practice</button>
   <button class="btn light" style="flex:1;min-width:140px" data-diag="${c.id}">Check what I know</button>
   <button class="btn light" style="flex:1;min-width:140px" data-flash="${c.id}">${ICON.cards} Flashcards</button>
+  <button class="btn light" style="flex:1;min-width:140px" data-mock="${c.id}">⏱ Mock exam</button>
  </div>
  <div style="margin-top:14px">${autopilotCard(c)}</div>
  <div class="card" style="margin-top:14px"><b style="font-weight:600">Memory curve</b><div class="muted" style="font-size:13px;margin-bottom:8px">Remembered now: ${Math.round(mem*100)}%. It fades without review and jumps back up when you revise.</div>${memoryChart(c)}</div>
@@ -630,7 +631,7 @@ function renderStats(){
  <div class="ccard c-mint row" style="margin-top:14px;cursor:default;gap:14px"><div style="font-size:34px" aria-hidden="true">🏆</div><div><b style="font-weight:600">${total?`${Math.round(ok/total*100)}% accuracy`:'No answers yet'}</b><div style="font-size:13px;opacity:.75">${total} questions answered · ${S.xp} XP · best streak ${Math.max(S.best,streak())} day${Math.max(S.best,streak())===1?'':'s'}</div></div></div>
  ${predVsActual()}
  <div class="grid2">${weekGoalCard()}${heatmap()}</div>
- <div style="height:14px"></div>${sessionsCard()}
+ <div style="height:14px"></div>${starredCard()}<div style="height:14px"></div>${sessionsCard()}
  ${weekReview()}
  <h2>Calibration</h2>
  ${calibCard(null)}
@@ -728,7 +729,7 @@ function startQuiz(list,title,mode='quiz'){
  Q.tick=setInterval(()=>{const el=$('#qtimer');if(el&&Q){const s=Math.floor((Date.now()-Q.t0)/1000);el.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}},1000);
 }
 function quizEl(){let el=$('#quiz');if(!el){el=document.createElement('div');el.id='quiz';el.className='quiz';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el)}return el}
-function topBar(){return `<div class="qtop"><button class="iconbtn" data-q="quit" aria-label="Stop">${ICON.x}</button><div class="dots" aria-label="Question ${Q.i+1} of ${Q.list.length}">${Q.list.map((_,j)=>`<i class="${j<Q.i?(Q.res[j]?'ok':'no'):j===Q.i?'d':''}"></i>`).join('')}</div>${S.settings.timer?'<span class="timer" id="qtimer">0:00</span>':''}</div>`}
+function topBar(){return `<div class="qtop"><button class="iconbtn" data-q="quit" aria-label="Stop">${ICON.x}</button><div class="dots" aria-label="Question ${Q.i+1} of ${Q.list.length}">${Q.list.map((_,j)=>`<i class="${j<Q.i?(Q.mode==='mock'?'m':Q.res[j]?'ok':'no'):j===Q.i?'d':''}"></i>`).join('')}</div>${S.settings.timer?'<span class="timer" id="qtimer">0:00</span>':''}</div>`}
 function drawQ(){
  const el=quizEl();
  if(Q.i>=Q.list.length)return drawDone(el);
@@ -747,9 +748,10 @@ function drawQ(){
   return;
  }
  el.innerHTML=`${topBar()}
- <div class="qcard c-${c.color}"><div class="qtag">${c.emoji} ${esc(c.code||c.name)} · ${esc(t.name)}${q.followup?` · <span style="color:var(--lavd)">↻ ${esc(q.followup)}</span>`:''}</div><div class="qtext">${esc(q.q)}</div></div>
+ ${Q.mode==='mock'?`<div class="mockbar">⏱ <b id="mocktime">${Math.max(0,Math.floor((Q.mockEnd-Date.now())/60000))}:00</b> left · no feedback until the end</div>`:''}
+ <div class="qcard c-${c.color}">${!q.gen?`<button class="starq ${(S.stars||{})[q.id]?'on':''}" data-star="${q.id}" aria-pressed="${!!(S.stars||{})[q.id]}" aria-label="Star this question">${(S.stars||{})[q.id]?'★':'☆'}</button>`:''}<div class="qtag">${c.emoji} ${esc(c.code||c.name)} · ${esc(t.name)}${q.followup?` · <span style="color:var(--lavd)">↻ ${esc(q.followup)}</span>`:''}</div><div class="qtext">${esc(q.q)}</div></div>
  <div class="opts">${q.o.map((o,j)=>`<button class="opt" data-opt="${j}"><span class="k">${j+1}</span><span>${esc(o)}</span></button>`).join('')}</div>
- ${q.o.length>2?hintBar(q):''}<div id="hintbox" aria-live="polite"></div>
+ ${q.o.length>2&&Q.mode!=='mock'?hintBar(q):''}<div id="hintbox" aria-live="polite"></div>
  <div id="why" aria-live="polite"></div>
  <div class="qfoot"><button class="btn full" id="nextb" data-q="next" style="visibility:hidden">Continue ${ICON.arrow}</button></div>
  <div class="kbd">Press <b>1</b>–<b>${q.o.length}</b> to answer · <b>H</b> hint · <b>Enter</b> to continue · <b>Esc</b> to stop</div>`;
@@ -760,6 +762,7 @@ function flashAnswer(rating){if(!Q||Q.picked!==null||!Q.flipped)return;Q.picked=
 const CONF=[['Guessing','🤷'],['Somewhat sure','🤔'],['Very sure','💪']];
 function shouldAskConf(){const m=S.settings.conf||'some';if(m==='off')return false;if(m==='always'||Q.title==='Check')return true;return Math.random()<0.4}
 function answer(j){
+ if(Q&&Q.mode==='mock'&&Q.picked===null)return mockAnswer(j);
  if(!Q||Q.picked!==null||Q.mode==='flash')return;const q=Q.list[Q.i];if(j>=q.o.length)return;
  if(Q.pend==null&&shouldAskConf()){
   Q.pend=j;Q.answerMs=Date.now()-Q.qStart;
@@ -853,7 +856,7 @@ function drawBreak(el){
  $('[data-q="resume"]')?.focus();
 }
 function drawDone(el){
- clearInterval(Q.tick);
+ clearInterval(Q.tick);clearInterval(Q.mockTick);
  const ok=Q.res.filter(Boolean).length,n=Q.res.length,pct=n?ok/n:0,st=streak();S.best=Math.max(S.best,st);
  if(n&&!Q.logged){Q.logged=1;S.sessions=S.sessions||[];S.sessions.push({ts:Date.now(),title:Q.title||'Practice',n,ok});if(S.sessions.length>100)S.sessions.shift()}
  save();
@@ -862,7 +865,7 @@ function drawDone(el){
   <h1 style="text-align:center;font-size:32px;margin-bottom:6px">${!n?'See you soon':pct>=.8?'Amazing!':pct>=.5?'Solid work!':'You showed up. That\'s the win'}</h1>
   <p class="muted" style="margin:0 0 18px">${ok}/${n} correct · +${ok*10+(n-ok)*3} XP${st?` · 🔥 ${st}-day streak`:''}</p>
   ${weak.length?`<div class="card" style="text-align:left;margin-bottom:14px"><b style="font-weight:600">Revisit next time</b><div class="muted" style="font-size:14px;margin-top:6px;line-height:1.6">${weak.map(esc).join('<br>')}</div></div>`:''}
-  <button class="btn full" data-q="close">Done</button><button class="btn light full" style="margin-top:10px" data-q="again">One more round</button></div>`;
+  ${Q.mode==='mock'?mockReview():''}<button class="btn full" data-q="close">Done</button><button class="btn light full" style="margin-top:10px" data-q="again">One more round</button></div>`;
  if(pct>=.6&&n)confetti();$('[data-q="close"]')?.focus();
 }
 function beep(ok){try{const a=window.__ac||(window.__ac=new (window.AudioContext||window.webkitAudioContext)()),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=ok?880:220;o.type='sine';g.gain.setValueAtTime(.07,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.25);o.start();o.stop(a.currentTime+.25)}catch{}}
@@ -908,6 +911,7 @@ const evColor=e=>KIND[e.kind]?.c||e.color||'sky';
 /* ---------- Today ---------- */
 function renderToday(){
  osInit();
+ if(view.zen)return zenView();
  const t=todayStr(),ev=eventsOn(t),nu=nextUp(),st=streak(),today=S.log[t]||{n:0},goal=S.settings.len,plan=todayPlan().slice(0,3);
  const nowM=new Date().getHours()*60+new Date().getMinutes();
  const week=[...Array(7)].map((_,i)=>addDays(t,i));
@@ -929,7 +933,7 @@ function renderToday(){
   <button class="row" data-tab="me" style="text-align:left"><div class="avatar" aria-hidden="true">${esc((S.name[0]||'?').toUpperCase())}</div>
    <div><div style="font-weight:600;font-size:18px">${greet}, ${esc(S.name)}! 👋</div><div style="font-size:13px" class="muted">${fmtDate(t,{weekday:'long',month:'long',day:'numeric'})}${st?` · 🔥 ${st}-day streak`:''}</div></div></button>
   <div class="row" style="gap:10px"><div class="lvl" title="${level().to} XP to the next level"><b>Lv ${level().l}</b><div class="bar" style="width:60px;height:6px;background:var(--bg)"><i style="width:${Math.round(level().p*100)}%;background:var(--lavd)"></i></div></div>
-  <button class="iconbtn" data-act="newevent" aria-label="Add to schedule">${ICON.plus}</button></div>
+  <button class="iconbtn" data-act="zen" aria-label="Zen mode" title="Zen mode: just your next step">🧘</button><button class="iconbtn" data-act="newevent" aria-label="Add to schedule">${ICON.plus}</button></div>
  </div>
  <h1 style="margin-top:22px">Your Day,<br>At a Glance</h1>
  ${nu?`<div class="ccard c-${evColor(nu)} upnext" ${nu.readonly?'':`data-editev="${nu.id}"`}>
@@ -1640,6 +1644,38 @@ function backupCard(){
  return `<h2>Your data</h2><div class="topic" style="flex-wrap:wrap"><div style="flex:1;min-width:160px"><div class="nm">Backup &amp; restore</div><div class="muted" style="font-size:12px">Download everything as a file, or bring a backup back.</div></div><div class="row" style="gap:8px"><button class="btn light" style="background:var(--bg);padding:10px 14px;font-size:14px" data-act="backup">⬇️ Backup</button><label class="btn light" style="background:var(--bg);padding:10px 14px;font-size:14px;cursor:pointer">⬆️ Restore<input type="file" accept="application/json,.json" id="restorefile" hidden></label></div></div>`;
 }
 
+/* ======================= Batch 4: mock exam, starred questions, due badge, zen mode ======================= */
+function dueCount(){const t=todayStr();return Object.values(S.q).filter(r=>r&&r.reps&&r.due<=t).length}
+function starredQs(){const st=S.stars||{};const all=[...PACK_Q,...S.cq];return Object.keys(st).map(id=>all.find(q=>q.id===id)).filter(q=>q&&TOPIC[q.t]).map(toMC).filter(q=>q.o&&q.o.length>=2)}
+function starredCard(){const n=starredQs().length;
+ return `<div class="card"><div class="row between"><div><b style="font-weight:600">⭐ Starred questions</b><div class="muted" style="font-size:12.5px">${n?`${n} saved. Star any question during a quiz.`:'Tap ☆ on any question during a quiz to save it here.'}</div></div>${n?`<button class="btn" style="padding:9px 14px;font-size:13px" data-act="starred">Practise</button>`:''}</div></div>`}
+function startMock(cid){
+ const c=S.courses.find(x=>x.id===cid);if(!c)return;
+ const list=buildSet({courseId:cid,n:20});if(!list||!list.length)return toast('Add some questions to this course first');
+ startQuiz(list,'Mock exam','mock');Q.picks=[];Q.mockEnd=Date.now()+list.length*72000;
+ clearInterval(Q.mockTick);Q.mockTick=setInterval(()=>{if(!Q||Q.mode!=='mock'){return}const left=Q.mockEnd-Date.now(),el=$('#mocktime');
+  if(left<=0){clearInterval(Q.mockTick);Q.list=Q.list.slice(0,Q.i);drawQ();return}
+  if(el)el.textContent=`${Math.floor(left/60000)}:${String(Math.floor(left/1000)%60).padStart(2,'0')}`},500);
+}
+function mockAnswer(j){
+ const q=Q.list[Q.i];if(!q||j>=q.o.length)return;Q.picked=j;const ok=j===q.a;Q.res[Q.i]=ok;Q.picks[Q.i]=j;
+ record(q,ok,(Date.now()-Q.qStart)/1000,undefined,{title:'Mock exam'});Q.i++;drawQ();
+}
+function mockReview(){
+ const wrong=Q.list.map((q,i)=>({q,i})).filter(x=>Q.res[x.i]===false);
+ if(!wrong.length)return Q.res.length?'<div class="card" style="text-align:left;margin-bottom:14px"><b>Every answer right. 🎉</b></div>':'';
+ return `<div class="card mockrev" style="text-align:left;margin-bottom:14px;max-height:40vh;overflow:auto"><b style="font-weight:600">Review your misses</b>${wrong.map(({q,i})=>`<div class="mr"><div style="font-weight:600;font-size:14px">${esc(q.q)}</div><div style="font-size:13px;color:var(--bad)">You: ${esc(q.o[Q.picks[i]]??'–')}</div><div style="font-size:13px;color:var(--good)">Answer: ${esc(q.o[q.a])}</div></div>`).join('')}</div>`;
+}
+function zenView(){
+ const top=typeof rankedActions==='function'?rankedActions()[0]:null,today=S.log[todayStr()]||{n:0},goal=S.settings.len;
+ return `<div class="zen"><button class="link muted2" data-act="zen" style="position:absolute;top:0;right:0;font-size:13px">Exit zen</button>${MASCOT(120,'happy')}
+  <div class="muted" style="font-size:13px;margin-top:10px">${Math.min(today.n,goal)}/${goal} today</div>
+  <h1 style="font-size:28px;margin:8px 0 6px;text-align:center">${top?`${esc(top.t.name)}`:'Daily practice'}</h1>
+  <p class="muted" style="margin:0 0 20px;text-align:center">${top?`${top.c.emoji} ${esc(top.c.code||top.c.name)} · ${esc(top.why[0]||'keeps it fresh')}`:'A few questions to keep everything fresh.'}</p>
+  ${top?`<button class="btn" style="padding:16px 28px;font-size:17px" data-revise="${top.t.id}" data-n="6">Start · about 5 min</button>`:`<button class="btn" style="padding:16px 28px;font-size:17px" data-act="daily">Start · about 5 min</button>`}
+  <div style="margin-top:14px"><button class="link" data-act="quick3">Or just 3 questions</button></div></div>`;
+}
+
 /* ======================= Phase E+F: readiness, autopilot, recovery ======================= */
 const examKey=(c,e)=>c.id+'|'+e.name+'|'+e.date;
 function examTopics(c,e){return c.topics.filter(t=>t.date<=e.date&&hasContent(t.id))}
@@ -1800,6 +1836,8 @@ function openPalette(){
 
 
 async function osClick(b,d,e){
+ if(d.star){S.stars=S.stars||{};if(S.stars[d.star])delete S.stars[d.star];else S.stars[d.star]=Date.now();save();const b=e.target.closest('[data-star]');if(b){const on=!!S.stars[d.star];b.classList.toggle('on',on);b.textContent=on?'★':'☆';b.setAttribute('aria-pressed',on)}toast(S.stars[d.star]?'Starred':'Unstarred');return true}
+ if(d.mock){startMock(d.mock);return true}
  if(d.gradd){gradesOf(d.gradd).push({id:uid('g_'),name:'',weight:'',score:''});save();render();return true}
  if(d.grdel){const [cid,gid]=d.grdel.split('|');S.grades[cid]=gradesOf(cid).filter(g=>g.id!==gid);save();render();return true}
  if(d.tdone){const t=tasks().find(x=>x.id===d.tdone);if(t){t.done=!t.done;save();render();if(t.done)toast('Done ✓')}return true}
@@ -1844,6 +1882,8 @@ async function osClick(b,d,e){
   case 'closechat':closeChat();return true;
   case 'runresearch':runResearch();return true;
   case 'aireceipt':aiReceipt();return true;
+  case 'zen':view.zen=!view.zen;render();scrollTo(0,0);return true;
+  case 'starred':{const L=starredQs();if(!L.length){toast('No starred questions yet');return true}startQuiz(shuffle(L).slice(0,12),'Starred');return true}
   case 'quick3':startQuiz(buildSet({n:3}),'Quick 3');return true;
   case 'backup':backupData();return true;
   case 'pushon':enablePush();return true;
@@ -1890,7 +1930,7 @@ document.addEventListener('click',async e=>{
  if(d.mk){return tagMistake(d.mk)}
  if(d.mistakes!==undefined){const m=mistakes().filter(q=>!d.mistakes||TOPIC[q.t]?.course.id===d.mistakes);return startQuiz(shuffle(m).slice(0,10),'Mistakes')}
  if(d.fk!==undefined)return flashAnswer(+d.fk);
- if(d.q){({next:()=>{Q.i++;drawQ()},quit:()=>{if(Q.res.length)drawDone(quizEl());else closeQuiz()},resume:drawQ,hint:giveHint,show:justShow,finish:()=>{Q.list=Q.list.slice(0,Q.i);drawQ()},close:closeQuiz,again:()=>{const m=Q.mode;closeQuiz();startQuiz(buildSet(),'Daily',m)}})[d.q]?.();return}
+ if(d.q){({next:()=>{Q.i++;drawQ()},quit:()=>{if(Q.res.length)drawDone(quizEl());else closeQuiz()},resume:drawQ,hint:giveHint,show:justShow,finish:()=>{Q.list=Q.list.slice(0,Q.i);drawQ()},close:closeQuiz,again:()=>{const m=Q.mode;closeQuiz();startQuiz(buildSet(),'Daily',m==='mock'?'quiz':m)}})[d.q]?.();return}
  if(d.copy){try{await navigator.clipboard.writeText(d.copy);toast('Code copied')}catch{toast(d.copy)}return}
  if(d.tab){closeChat();return go(()=>{view.tab=d.tab;view.course=view.edit=view.addq=null;draft=null})}
  if(d.filter){view.filter=d.filter;return render()}
