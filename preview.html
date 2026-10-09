@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<title>Loop — study buddy</title>
+<meta name="theme-color" content="#F4F1FA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Loop">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#F4F1FA;--card:#FFFFFF;--ink:#1F1D2B;--muted:#7C7891;--line:#ECE8F4;
+ --lav:#D9CCF0;--lav2:#B9A3E6;--lavd:#7C5CD6;--mint:#CFE7E0;--mintd:#3E9B83;
+ --peach:#FBDCCB;--peachd:#D9774A;--sky:#CFDDF7;--skyd:#4C78D0;--lemon:#FBEBB0;--lemond:#C79A12;
+ --good:#3FB27F;--bad:#E8657A;--r:28px;
+ --safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Poppins,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input{font:inherit}
+.app{max-width:480px;margin:0 auto;min-height:100dvh;position:relative;padding:calc(18px + var(--safe-t)) 18px calc(110px + var(--safe-b))}
+.dash{display:block}
+.rail{display:none}
+.kbd{display:none}
+@media(min-width:900px){
+ body{background:radial-gradient(1200px 600px at 10% 0%,#EADFFB 0,transparent 60%),radial-gradient(900px 500px at 100% 100%,#D8F0E8 0,transparent 60%),var(--bg)}
+ .app{max-width:1360px;display:grid;grid-template-columns:250px 1fr;gap:36px;padding:28px 36px 40px}
+ .side{display:flex!important}
+ .nav{display:none!important}
+ .grid2{grid-template-columns:1fr 1fr!important}
+ h1{font-size:44px}
+ .pills{margin:0;padding-left:0;flex-wrap:wrap}
+ .dash{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+ .rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:28px}
+ .ccard:hover{transform:translateY(-3px);box-shadow:0 14px 30px #6d5aa31f}
+ .ccard{transition:transform .2s,box-shadow .2s}
+ .topic[data-course]:hover,.topic[data-cram]:hover{transform:translateX(3px)}
+ .topic{transition:transform .15s}
+ .side button:not(.on):hover{background:var(--bg);color:var(--ink)}
+ .hero{max-width:none;flex-direction:row;min-height:100dvh}
+ .hero .art{flex:1.1}
+ .hero .sheet{flex:0 0 520px;border-radius:40px 0 0 40px;display:flex;flex-direction:column;justify-content:center;padding:60px 64px;text-align:left}
+ .hero .sheet h1{text-align:left!important;font-size:46px}
+ .hero .art svg{width:340px;height:340px}
+ .quiz{max-width:none;padding:36px;align-items:center;background:radial-gradient(900px 500px at 0 0,#EADFFB,transparent 60%),var(--bg)}
+ .quiz>*{width:100%;max-width:760px}
+ .qtext{font-size:26px}
+ .opts{grid-template-columns:1fr 1fr}
+ .opt{min-height:84px}
+ .kbd{display:block;text-align:center;font-size:13px;color:var(--muted);margin-top:12px}
+ .kbd b{display:inline-block;background:#fff;border-radius:6px;padding:1px 7px;margin:0 2px;box-shadow:0 1px 0 #0002;font-weight:600}
+ .big3 .n{font-size:34px}
+}
+.side{display:none;flex-direction:column;gap:6px;position:sticky;top:32px;height:calc(100dvh - 64px);background:var(--card);border-radius:var(--r);padding:22px 14px}
+.side .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;padding:0 10px 18px}
+.side button{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;font-weight:500;color:var(--muted);text-align:left}
+.side button.on{background:var(--ink);color:#fff}
+.main{min-width:0}
+h1{font-size:32px;line-height:1.12;font-weight:700;margin:6px 0 18px;letter-spacing:-.02em}
+h2{font-size:20px;font-weight:700;margin:26px 0 12px;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+.row{display:flex;align-items:center;gap:12px}
+.between{justify-content:space-between}
+.iconbtn{width:52px;height:52px;border-radius:50%;background:var(--card);display:grid;place-items:center;box-shadow:0 2px 0 var(--line)}
+.avatar{width:52px;height:52px;border-radius:50%;background:var(--lav);display:grid;place-items:center;font-weight:700;font-size:20px;color:var(--lavd)}
+.bar{height:8px;border-radius:9px;background:#fff;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:9px;background:var(--lav2);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.pills{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin:0 -18px;padding-left:18px;padding-right:18px}
+.pills::-webkit-scrollbar{display:none}
+.pill{flex:none;padding:9px 16px;border-radius:99px;background:var(--card);font-size:14px;font-weight:500;color:var(--muted);display:flex;gap:6px;align-items:center}
+.pill.on{background:var(--ink);color:#fff}
+.pill b{font-size:11px;background:var(--lav);color:var(--lavd);border-radius:99px;padding:1px 7px}
+.pill.on b{background:#fff2;color:#fff}
+.card{background:var(--card);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
+.ccard{border-radius:var(--r);padding:20px;position:relative;overflow:hidden;cursor:pointer;transition:transform .15s}
+.ccard:active{transform:scale(.98)}
+.ccard .sparkle{position:absolute;right:-10px;top:30px;opacity:.35;font-size:90px;pointer-events:none}
+.c-mint{background:var(--mint)}.c-lav{background:var(--lav)}.c-peach{background:var(--peach)}.c-sky{background:var(--sky)}.c-lemon{background:var(--lemon)}
+.chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600}
+.glyph{width:52px;height:52px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:24px}
+.go{width:58px;height:58px;border-radius:50%;background:#fff;display:grid;place-items:center;position:relative}
+.go svg.ring{position:absolute;inset:-4px}
+.stack{display:grid;gap:14px}
+.grid2{display:grid;gap:14px;grid-template-columns:1fr}
+.stat{border-radius:24px;padding:16px}
+.stat .n{font-size:30px;font-weight:800;line-height:1}
+.stat .l{font-size:13px;font-weight:500;color:var(--ink);opacity:.7;margin-top:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 28px;border-radius:99px;background:var(--ink);color:#fff;font-weight:600;font-size:16px}
+.btn.light{background:#fff;color:var(--ink)}
+.btn.full{width:100%}
+.btn:disabled{opacity:.4}
+.circ{width:64px;height:64px;border-radius:50%;background:var(--lav2);display:grid;place-items:center;color:#fff;box-shadow:0 0 0 5px #fff, 0 0 0 7px var(--ink)}
+/* nav */
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + var(--safe-b));width:min(452px,calc(100% - 28px));background:var(--card);border-radius:30px;display:flex;justify-content:space-around;align-items:center;padding:10px 8px;box-shadow:0 10px 30px #6d5aa322;z-index:20}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);font-weight:500;width:60px}
+.nav button.on{color:var(--ink)}
+.nav .mid{width:62px;height:62px;border-radius:50%;background:var(--lavd);color:#fff;margin-top:-34px;box-shadow:0 0 0 6px var(--bg);display:grid;place-items:center}
+/* quiz */
+.quiz{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;flex-direction:column;padding:calc(16px + var(--safe-t)) 18px calc(18px + var(--safe-b));max-width:640px;margin:0 auto;overflow-y:auto}
+.qtop{display:flex;align-items:center;gap:12px}
+.dots{flex:1;display:flex;gap:5px}
+.dots i{flex:1;height:8px;border-radius:9px;background:#fff}
+.dots i.d{background:var(--lav2)}.dots i.ok{background:var(--good)}.dots i.no{background:var(--bad)}
+.qcard{margin-top:22px;border-radius:var(--r);padding:22px;animation:pop .35s cubic-bezier(.2,.9,.3,1.2)}
+.qtag{font-size:13px;font-weight:600;opacity:.65;margin-bottom:8px}
+.qtext{font-size:21px;font-weight:600;line-height:1.35}
+.opts{display:grid;gap:10px;margin-top:18px}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;background:#fff;border-radius:20px;padding:16px;font-size:16px;font-weight:500;border:2px solid transparent;transition:.15s}
+.opt .k{flex:none;width:30px;height:30px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted)}
+.opt:hover{border-color:var(--lav2)}
+.opt.ok{background:#E2F6EC;border-color:var(--good)}.opt.ok .k{background:var(--good);color:#fff}
+.opt.no{background:#FDE7EB;border-color:var(--bad)}.opt.no .k{background:var(--bad);color:#fff}
+.opt.dim{opacity:.45}
+.why{margin-top:14px;background:#fff;border-radius:20px;padding:16px;font-size:15px;line-height:1.5;animation:pop .3s}
+.why b{display:block;font-size:17px;margin-bottom:4px}
+.qfoot{margin-top:auto;padding-top:18px;display:flex;gap:10px}
+.timer{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;background:#fff;border-radius:99px;padding:8px 12px}
+@keyframes pop{from{transform:scale(.96) translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@keyframes float{50%{transform:translateY(-8px)}}
+.float{animation:float 4s ease-in-out infinite}
+/* hero */
+.hero{min-height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;background:var(--lav)}
+.hero .art{flex:1;display:grid;place-items:center;position:relative;padding-top:var(--safe-t)}
+.hero .sheet{background:#fff;border-radius:36px 36px 0 0;padding:30px 24px calc(28px + var(--safe-b));text-align:center}
+.hero h1{font-size:36px;text-align:center;margin:0 0 10px}
+.field{width:100%;padding:16px 18px;border-radius:18px;border:2px solid var(--line);background:var(--bg);outline:none;margin-bottom:10px;font-size:16px}
+.field:focus{border-color:var(--lav2)}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin:4px 0}
+.link{color:var(--lavd);font-weight:600}
+/* chart */
+.chart{display:flex;align-items:flex-end;gap:10px;height:170px;padding-top:24px}
+.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+.chart .b{width:100%;max-width:38px;border-radius:99px;min-height:14px;position:relative;transition:height .8s cubic-bezier(.2,.8,.2,1)}
+.chart .b span{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700}
+.chart .b.top span{background:var(--lavd);color:#fff;border-radius:99px;padding:2px 7px;top:-26px}
+.chart small{font-size:12px;color:var(--muted)}
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.cal .h{font-size:13px;font-weight:600;color:var(--muted);padding:6px 0}
+.cal .d{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:#fff;font-weight:600;font-size:15px;position:relative}
+.cal .d.o{background:transparent;border:1.5px dashed #0001;color:var(--muted)}
+.cal .d.ex{background:var(--lav2);color:#fff}
+.cal .d.today{background:var(--ink);color:#fff}
+.cal .d.done::after{content:'';position:absolute;bottom:5px;width:5px;height:5px;border-radius:50%;background:var(--mintd)}
+.topic{display:flex;align-items:center;gap:14px;background:#fff;border-radius:22px;padding:14px 16px}
+.topic .nm{font-weight:600;font-size:15px}
+.tag{font-size:11px;font-weight:700;border-radius:99px;padding:3px 9px;text-transform:uppercase;letter-spacing:.03em}
+.tag.behind{background:#FDE7EB;color:var(--bad)}.tag.ok{background:#E2F6EC;color:var(--good)}.tag.soon{background:var(--bg);color:var(--muted)}.tag.new{background:var(--lemon);color:var(--lemond)}
+.ring{--p:0;width:54px;height:54px;border-radius:50%;background:conic-gradient(var(--c,var(--lavd)) calc(var(--p)*1%),#0000000d 0);display:grid;place-items:center;flex:none}
+.ring>span{width:42px;height:42px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
+.toast{position:fixed;left:50%;top:calc(16px + var(--safe-t));transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:99px;font-weight:500;z-index:99;animation:pop .3s}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.big3 .stat{text-align:center;padding:14px 8px}
+.big3 .n{font-size:26px}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+.switch{width:52px;height:30px;border-radius:99px;background:var(--line);position:relative;transition:.2s;flex:none}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px #0002}
+.switch.on{background:var(--lavd)}.switch.on::after{left:25px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>// Course data built from Armaan's OWL Brightspace (Fall 2026). Dates = when the topic is taught.
+window.COURSES = [
+ {id:'env', code:'ENVIRSCI 1021F', name:'Environmental Science', emoji:'🌿', color:'mint',
+  exams:[{name:'Midterm (Ch 1–4)', date:'2026-10-28'}],
+  topics:[
+   {id:'e1', name:'The Anthropocene & our footprint', date:'2026-09-09'},
+   {id:'e2', name:'Science, uncertainty & policy', date:'2026-09-16'},
+   {id:'e3', name:'Ecology: thinking in wholes', date:'2026-09-23'},
+   {id:'e4', name:'Evolution & biodiversity', date:'2026-10-07'},
+   {id:'e5', name:'Population & environmental health', date:'2026-10-21', locked:true}
+  ]},
+ {id:'anth', code:'ANTHRO 1025F', name:'Sociocultural Anthropology', emoji:'🌍', color:'lav',
+  exams:[{name:'Mid-term (Socio-Cultural)', date:'2026-10-26'}],
+  topics:[
+   {id:'a1', name:'What is anthropology?', date:'2026-09-09'},
+   {id:'a2', name:'Culture & ethnography', date:'2026-09-14'},
+   {id:'a3', name:'Culture & selves', date:'2026-09-21'},
+   {id:'a4', name:'Culture & the world', date:'2026-09-28'},
+   {id:'a5', name:'Culture, power & exchange', date:'2026-10-05'}
+  ]},
+ {id:'soc', code:'SOCIOLOG 1025A', name:'Society and You', emoji:'👥', color:'peach',
+  exams:[{name:'Midterm (Ch 1–7, ~75 MC)', date:'2026-10-27'}],
+  topics:[
+   {id:'s1', name:'What is sociology?', date:'2026-09-15'},
+   {id:'s2', name:'Research methods & Tearoom Trade', date:'2026-09-22'},
+   {id:'s3', name:'Culture & norms', date:'2026-09-29'},
+   {id:'s4', name:'Socialization & social roles', date:'2026-10-06'},
+   {id:'s5', name:'Deviance, crime & social control', date:'2026-10-20'}
+  ]},
+ {id:'mos', code:'MOS 1021A', name:'Consumer Behaviour & HR', emoji:'💼', color:'sky',
+  exams:[{name:'Exam 01 (Sessions 1–3)', date:'2026-10-08'}],
+  topics:[
+   {id:'m1', name:'Intro to HRM', date:'2026-09-17'},
+   {id:'m2', name:'Job analysis & design', date:'2026-09-24'},
+   {id:'m3', name:'Talent acquisition', date:'2026-10-01'},
+   {id:'m4', name:'Training & performance mgmt', date:'2026-10-22'}
+  ]},
+ {id:'math', code:'MATH 1228A', name:'Finite Mathematics', emoji:'🎲', color:'lemon',
+  exams:[{name:'Term Test 1', date:'2026-10-23'},{name:'Term Test 2', date:'2026-11-13'}],
+  topics:[
+   {id:'h1', name:'Sets & Venn counting (1.1–1.2)', date:'2026-09-09'},
+   {id:'h2', name:'Counting principles (1.3)', date:'2026-09-14'},
+   {id:'h3', name:'Permutations (1.4)', date:'2026-09-21'},
+   {id:'h4', name:'Combinations (1.5)', date:'2026-09-21'},
+   {id:'h5', name:'Multiple groups (1.6)', date:'2026-09-28'},
+   {id:'h6', name:'Probability basics (2.1–2.2)', date:'2026-10-02'},
+   {id:'h7', name:'Conditional & independence (2.3)', date:'2026-10-07'},
+   {id:'h8', name:'Probability trees & Bayes (2.4–2.5)', date:'2026-10-19'},
+   {id:'h9', name:'Repeated trials (2.6)', date:'2026-10-26'}
+  ]}
+];
+
+// q: question, o: options, a: correct index, e: why
+window.QUESTIONS = [
+// ---------- ENVIRSCI ----------
+{t:'e1',q:'What does "Anthropocene" describe?',o:['An official geological epoch after the Holocene','A widely used term for the period when humans became a major influence on Earth systems','A period of natural climate cooling','The era before agriculture'],a:1,e:'It is NOT a formally recognized epoch (geologists rejected it in 2024), but it is widely used to describe profound human influence.'},
+{t:'e1',q:'Graphs of the "Great Acceleration" mostly show…',o:['Gradual linear increase from 1800','Rapid acceleration starting around the mid-20th century','A peak in 1970 then decline','No consistent pattern'],a:1,e:'Many unrelated indicators (population, CO₂, water use) bend sharply upward around 1950.'},
+{t:'e1',q:'An ecological footprint is…',o:['The population an area can support forever','Land needed to provide resources for, and absorb the waste of, a person or population','Total CO₂ a country emits','The area of protected land'],a:1,e:'Footprint = land to supply resources + assimilate waste.'},
+{t:'e1',q:'Carrying capacity is…',o:['Fixed for every environment','The population size an area can support indefinitely','The number of species in an area','A country\'s total consumption'],a:1,e:'And it is NOT fixed — it depends on consumption, technology, trade and ecosystem productivity.'},
+{t:'e1',q:'Which is NOT one of Jared Diamond\'s five factors for societal collapse?',o:['Natural climate change','Hostile neighbours','Lack of written language','Loss of friendly neighbours'],a:2,e:'The five: climate change, self-inflicted damage, failure to respond, hostile neighbours, loss of friendly neighbours.'},
+{t:'e1',q:'For the Greenland Vikings, "failure to respond to the environment" meant…',o:['They refused to eat fish','They built too many ships','They moved inland','They overused solar power'],a:0,e:'They would not eat fish and refused Inuit help; overgrazing was the self-inflicted damage.'},
+{t:'e1',q:'What does the ozone / Montreal Protocol story demonstrate?',o:['Damage repairs itself','Science alone solves problems','Coordinated science, policy, technology and cooperation can reverse dangerous trends','Global agreements don\'t work'],a:2,e:'Detect → identify cause → negotiate → substitute tech → monitor → change trajectory.'},
+{t:'e1',q:'Sustainable development means…',o:['Zero economic growth','Meeting present needs without compromising future generations\' ability to meet theirs','Only protecting wilderness','Maximizing GDP'],a:1,e:'Classic definition; the UN 2030 Agenda (2015) built on it.'},
+{t:'e1',q:'Sustainability → resilience → regeneration means…',o:['maintain → recover → improve','grow → shrink → stop','recover → maintain → collapse','improve → maintain → recover'],a:0,e:'"Beyond sustainability": sustain = maintain, resilience = recover, regeneration = improve.'},
+{t:'e1',q:'The IPAT framework estimates impact from…',o:['Ice, Plants, Animals, Temperature','Population × Affluence × Technology','Policy, Action, Trade','Pollution × Agriculture × Transport'],a:1,e:'I = P × A × T.'},
+{t:'e2',q:'Environmental science is best described as…',o:['A social movement to protect nature','An interdisciplinary field drawing on natural sciences, social sciences and humanities','A branch of biology only','Political advocacy'],a:1,e:'Environmentalism advocates; environmental science asks questions. You can be both but they\'re not the same.'},
+{t:'e2',q:'Determining which crops suit a soil to help farmers decide is…',o:['Empirical science','Applied science','Not science','Environmentalism'],a:1,e:'Applied = practical use of knowledge. Studying soil composition itself would be empirical.'},
+{t:'e2',q:'Which question is NOT scientifically testable?',o:['Why do bats get white-nose syndrome?','Why do humans need to protect bats from WNS?','How have mosquito numbers changed since WNS?','What genetic change made the fungus dangerous?'],a:1,e:'"Need to protect" is an ethical/value question — science can\'t settle it.'},
+{t:'e2',q:'Good hypotheses must be…',o:['Proven correct','Testable, replicable and falsifiable','Based on opinion','Long and detailed'],a:1,e:'Hypotheses are supported or rejected — never "proven".'},
+{t:'e2',q:'Hypothesis vs prediction:',o:['Same thing','A hypothesis explains; a prediction is the specific outcome you\'d see if the hypothesis is supported','A prediction comes before observation','A hypothesis is a fact'],a:1,e:'Hypothesis = possible explanation. Prediction = expected result in your specific test.'},
+{t:'e2',q:'Which study type can show cause and effect?',o:['Observational','Experimental (manipulative) with control groups','Surveys','Case stories'],a:1,e:'Observational studies only show correlation; experiments manipulate variables.'},
+{t:'e2',q:'Precision means…',o:['How close a value is to the true value','How close repeated measurements are to each other','Number of samples','How fast you measure'],a:1,e:'Accuracy = close to true value. Precision = close to each other.'},
+{t:'e2',q:'Cities with more bicycles have healthier people. This shows…',o:['Bikes cause health','A correlation — other factors may explain it','Nothing at all','Health causes bikes, definitely'],a:1,e:'Correlation ≠ causation.'},
+{t:'e2',q:'The precautionary principle says…',o:['Wait for 100% certainty','Act with a safety margin when data are uncertain and consequences could be severe','Never regulate chemicals','Let markets decide'],a:1,e:'E.g., the Montreal Protocol (1987) came before Solomon\'s 1988 confirming studies.'},
+{t:'e2',q:'Science CANNOT by itself tell us…',o:['What is happening','Why it might be happening','What risks are acceptable','What interventions might do'],a:2,e:'Acceptable risk, who pays, and priorities are value choices.'},
+{t:'e2',q:'Which book sparked the modern environmental movement?',o:['Braiding Sweetgrass','Silent Spring','Collapse','The Population Bomb'],a:1,e:'Rachel Carson, Silent Spring (1962).'},
+{t:'e3',q:'Earth is a closed system for ___ but not for ___.',o:['energy, matter','matter, energy','carbon, nitrogen','water, carbon'],a:1,e:'Materially closed (matter cycles), energetically open (sunlight in, heat out).'},
+{t:'e3',q:'Which nutrient cycle does NOT involve the atmosphere?',o:['Carbon','Nitrogen','Phosphorus','Water'],a:2,e:'Phosphorus moves through rock, water and organisms.'},
+{t:'e3',q:'A keystone species…',o:['Is always the most abundant','Has an impact on its community far larger than its abundance predicts','Is always a plant','Is endangered'],a:1,e:'E.g., sea stars in the Pacific NW intertidal: removing them cut prey species from 15 to 8.'},
+{t:'e3',q:'Which is NOT an anthrome?',o:['A botanic garden','Your campus','A cow pasture','A tallgrass prairie'],a:3,e:'A tallgrass prairie is a natural biome; anthromes are human-altered.'},
+{t:'e3',q:'Exponential growth happens when…',o:['Resources are limited','There are no limits to growth (birth rate > death rate)','A population is at carrying capacity','Predators increase'],a:1,e:'Often when entering a new environment — but it can\'t last and often ends in collapse.'},
+{t:'e3',q:'Snowshoe hares (many offspring, fast reproduction) are…',o:['K-adapted','r-adapted','Keystone species','Producers'],a:1,e:'r-selected: many young, little care. K-selected: few young, more care, near carrying capacity.'},
+{t:'e3',q:'Uniform distribution of individuals usually reflects…',o:['Random chance','Negative interactions like territoriality','Social grouping','Patchy habitat'],a:1,e:'Random = independent; clumped = habitat/social; uniform = competition/territory.'},
+{t:'e3',q:'Which is bottom-up regulation in Yellowstone?',o:['Wolves prey on elk','A drought kills willows','Bears eat salmon','Elk eat aspen'],a:1,e:'Bottom-up = control from producers/resources. Top-down = predators.'},
+{t:'e3',q:'After wolves returned to Yellowstone, which did NOT happen?',o:['Beavers and birds increased','Elk and herbivore populations increased','Streambanks stabilized','Willows prospered'],a:1,e:'Elk DROPPED — a trophic cascade.'},
+{t:'e3',q:'Primary succession happens…',o:['On newly exposed surfaces with no biological components','After a fire','In a farm field','Only in oceans'],a:0,e:'Secondary succession happens where biota already modified the environment (e.g., old field).'},
+{t:'e3',q:'A limiting factor is…',o:['Any predator','The critical resource whose availability determines population size/distribution','The minimum viable population','A biome type'],a:1,e:'Range of tolerance = the range of that factor within which a species can survive and reproduce.'},
+{t:'e3',q:'A population with high species richness but low evenness has…',o:['Few species, equal numbers','Many species but one or two dominate','Many species in equal numbers','One species'],a:1,e:'Richness = how many species; evenness = how equally abundant.'},
+{t:'e4',q:'Biodiversity includes variety at which levels?',o:['Species only','Genetic, species and ecosystem','Ecosystem only','Cell and organ'],a:1,e:'Genetic diversity is the population-level one.'},
+{t:'e4',q:'Drought leaves mostly large hard seeds. After several generations of finches you\'d predict…',o:['Individual birds grow bigger beaks','Average beak size in the population increases','All small-beaked finches vanish instantly','Finches mutate on demand'],a:1,e:'Individuals are selected; populations evolve.'},
+{t:'e4',q:'A bottleneck effect is…',o:['Genetic change after a large part of a population is wiped out','New alleles from mutation','Migration of a few founders','Natural selection for large size'],a:0,e:'Northern elephant seals are the classic example. Founder effect is similar but from dispersal.'},
+{t:'e4',q:'Extirpation means…',o:['Extinct everywhere','Gone from one region but still present elsewhere','Endangered','Newly discovered'],a:1,e:'Reintroduction to that region is possible.'},
+{t:'e4',q:'The greatest current threat to biodiversity is…',o:['Overharvesting','Pollution','Climate change','Habitat destruction'],a:3,e:'Habitat destruction was a factor in ~70% of bird extinction risk cases.'},
+{t:'e4',q:'What wiped out Guam\'s birds?',o:['Disease','Pesticides','An introduced predator (brown tree snake)','Hunting'],a:2,e:'An invasive species case study.'},
+{t:'e4',q:'Which vertebrate group is most at risk of extinction?',o:['Birds','Amphibians','Mammals','Reptiles'],a:1,e:'~41% of amphibians vs ~25% mammals, 21% reptiles, 14% birds.'},
+{t:'e4',q:'Which is NOT an ecosystem service of biodiversity?',o:['Flood control','Pollination','Recreation','Transportation'],a:3,e:''},
+{t:'e4',q:'Canada\'s federal law to prevent extinction/extirpation is…',o:['Endangered Species Act','Species at Risk Act (2002)','CITES','Ramsar'],a:1,e:'ESA is the U.S. law.'},
+{t:'e4',q:'The ecosystem approach to conservation…',o:['Focuses on charismatic species like pandas','Protects whole ecosystems and their interactions, often hotspots','Relies on captive breeding','Ignores habitat'],a:1,e:'Single-species = charismatic animals, captive breeding.'},
+{t:'e4',q:'Who keeps the Red List of Threatened Species?',o:['UN Environment','IUCN','WWF','Environment Canada'],a:1,e:'Since 1963.'},
+{t:'e4',q:'Is ecological change after wolf reintroduction "succession"?',o:['Yes, all change is succession','Yes, vegetation changed','No — succession is community change following disturbance over time','No, animals can\'t affect plants'],a:2,e:'It\'s a trophic cascade, not succession.'},
+// ---------- ANTHRO ----------
+{t:'a1',q:'Anthropology is distinctive because it is…',o:['Purely biological','Holistic — integrating all parts of human life','Only about the past','Only about language'],a:1,e:'Anthropos = human, -ology = study of.'},
+{t:'a1',q:'The four fields of anthropology are…',o:['Biological, archaeology, linguistic, socio-cultural','Psych, soc, history, econ','Medical, legal, forensic, cultural','Physical, chemical, social, spiritual'],a:0,e:''},
+{t:'a1',q:'Who is the "father of American anthropology" and popularized the four-field approach?',o:['Malinowski','Franz Boas','Margaret Mead','Sidney Mintz'],a:1,e:'Boas also countered scientific racism with historical particularism.'},
+{t:'a1',q:'Who invented ethnographic methods and studied Pacific exchange?',o:['Bronislaw Malinowski','Paul Farmer','Clifford Geertz','Zora Neale Hurston'],a:0,e:'He studied the Kula ring in the Trobriand Islands.'},
+{t:'a1',q:'Who wrote Sweetness and Power?',o:['Nancy Scheper-Hughes','Sidney Mintz','Margaret Mead','Paul Farmer'],a:1,e:'A Marxist anthropologist studying food commodities in the Caribbean.'},
+{t:'a1',q:'Paul Farmer is known for…',o:['Coming of Age in Samoa','Founding Partners in Health and studying HIV/AIDS in Haiti','Structuralism','The Kula ring'],a:1,e:'AIDS and Accusation: Haiti and the Geography of Blame.'},
+{t:'a1',q:'Archaeology studies…',o:['Living languages','The human past through material remains','Primates only','Modern cities'],a:1,e:''},
+{t:'a2',q:'E.B. Tylor defined culture as…',o:['Webs of meaning','The complex whole of knowledge, belief, art, law, morals, custom and capabilities acquired as a member of society','A way to satisfy needs','Brain structures'],a:1,e:'The classic 1871 definition.'},
+{t:'a2',q:'Historical particularism (Boas) holds that…',o:['Cultures evolve from savage to civilized','Each culture develops through its own history and can\'t be ranked against others','Culture is biological','Culture serves needs'],a:1,e:'It opposed cultural evolutionism, a soft form of scientific racism.'},
+{t:'a2',q:'Malinowski\'s functionalism says culture…',o:['Exists to satisfy human needs','Maintains group cohesion','Mirrors brain functions','Is webs of meaning'],a:0,e:'Radcliffe-Brown = structural functionalism (cohesion).'},
+{t:'a2',q:'Clifford Geertz is associated with…',o:['Structuralism','Interpretive anthropology — "webs of meaning"','Functionalism','Ethos'],a:1,e:''},
+{t:'a2',q:'Claude Lévi-Strauss argued cultural phenomena…',o:['Take the shape of cognitive structures in our brains','Serve needs','Are random','Are biological'],a:0,e:'Structuralism.'},
+{t:'a2',q:'Ruth Benedict saw culture as…',o:['Patterns that create an "ethos" expressed in individual psychology','Needs fulfilment','Material objects','Kinship rules'],a:0,e:''},
+{t:'a2',q:'Which is NOT a listed characteristic of culture?',o:['Learned','Symbolic','Genetic','Embodied'],a:2,e:'Learned, symbolic, embodied, holistic, integrated, traditional.'},
+{t:'a2',q:'Anthropology\'s main research method is…',o:['Lab experiments','Participant observation (ethnography)','National surveys','Fossil dating'],a:1,e:''},
+{t:'a2',q:'Judging another culture by your own standards is…',o:['Cultural relativism','Ethnocentrism','Particularism','Functionalism'],a:1,e:'Cultural relativism = understanding a culture on its own terms.'},
+{t:'a3',q:'Durkheim\'s mechanical solidarity connects people by…',o:['Interdependent needs','Similarity (e.g., kinship) in small homogeneous groups','Contracts','Money'],a:1,e:'Organic solidarity = connected by needs, like organs, in large heterogeneous groups.'},
+{t:'a3',q:'Organic solidarity is typical of…',o:['Small bands','Large heterogeneous societies with stratified labour','Families only','Religious cults'],a:1,e:''},
+{t:'a3',q:'Patrilineal descent traces…',o:['The mother\'s line','The father\'s line','Both equally','Neither'],a:1,e:'Matrilineal = mother; ambilineal = both.'},
+{t:'a3',q:'Polyandry means…',o:['A man has several wives','A woman has several husbands','One spouse only','Group marriage'],a:1,e:'Polygyny = multiple wives. Both are types of polygamy.'},
+{t:'a3',q:'Bride wealth is…',o:['Paid by the bride\'s family to the groom\'s','Paid by the groom to the bride\'s family','Labour given by the groom','A wedding gift from guests'],a:1,e:'Dowry goes the other way; bride service is labour.'},
+{t:'a3',q:'Neolocal residence means the couple…',o:['Lives with the father\'s family','Lives with the mother\'s family','Lives in a new separate home','Moves yearly'],a:2,e:''},
+{t:'a3',q:'Race, gender, class and nationality are examples of…',o:['Attained identities','Ascribed identities','Performances only','Kinship patterns'],a:1,e:'Ascribed = given by social circumstances; attained = chosen.'},
+{t:'a3',q:'Anthropology today views race as…',o:['A biological hierarchy','A social construct with no biological basis','Purely genetic','Irrelevant'],a:1,e:'But it is self-reinforcing through institutions like housing.'},
+{t:'a3',q:'Performativity theory says…',o:['There is an innate fixed self','The self is produced through acts of performing it in social context','Identity is genetic','Only actors perform'],a:1,e:''},
+{t:'a3',q:'The kinship system most common in Canada (cousins distinct, nuclear family emphasized) is…',o:['Iroquois','Eskimo','Hawaiian','Crow'],a:1,e:'In Iroquois, father\'s brother is also called "father".'},
+{t:'a4',q:'Settler colonialism is when…',o:['Territory is controlled only to extract labour and resources','Territory is claimed for colonists to settle and live','Trade happens fairly','A state is born from revolt'],a:1,e:'Economic colonialism = extraction of labour and resources.'},
+{t:'a4',q:'Shamans differ from priests because shamans…',o:['Get power from ritual knowledge','Get power directly from the spirit world','Work only in churches','Don\'t deal with illness'],a:1,e:'Priests mediate through ritual knowledge.'},
+{t:'a4',q:'Sorcery vs witchcraft:',o:['Sorcery is intentional harm; witchcraft is unintentional','Both are always intentional','Witchcraft is good magic','Same thing'],a:0,e:''},
+{t:'a4',q:'Combining different religious beliefs is called…',o:['Cargo cult','Syncretism','Revival','Divination'],a:1,e:'Cargo cults centre on things from the encounter; revival movements call for a return to tradition.'},
+{t:'a4',q:'Divination means…',o:['Compelling spirits to act','Using a spiritual connection to gain knowledge','Becoming a god','Healing'],a:1,e:'Magic = compelling the supernatural.'},
+{t:'a4',q:'Rituals like weddings and funerals are…',o:['Periodic rituals','Life-stage rituals','Magic','Divination'],a:1,e:'Periodic = seasonal or harvest.'},
+{t:'a4',q:'Nationality (as an identity) is…',o:['Ethnic identity tied to state and territory','A biological category','Purely chosen','Kinship'],a:0,e:'It often excludes those who don\'t fit, sometimes leading to removal or genocide.'},
+{t:'a4',q:'Social class is…',o:['Only about money','A hierarchical system including wealth AND cultural factors like language and dress','Fixed forever','The same as ethnicity'],a:1,e:'It can change but is very difficult to (Pygmalion / My Fair Lady).'},
+{t:'a5',q:'A "band" political organization is…',o:['Large and bureaucratic','Small (~30), nomadic, kinship-based and egalitarian','A hereditary chiefdom','A state'],a:1,e:'Tribes ~100+ with a "big man"; chiefdoms 1000+ with a hereditary chief.'},
+{t:'a5',q:'The typology of bands, tribes, chiefdoms and states…',o:['Is an evolutionary ladder','Is NOT an evolution — each has a different kind of complexity','Ranks states as most advanced','Applies only to Africa'],a:1,e:''},
+{t:'a5',q:'How do the !Kung Bushmen stop people gaining too much power?',o:['Witch purges','Ridicule and jokes','Elections','Exile'],a:1,e:'The Tiv link accumulated wealth to witchcraft. "Eating Christmas in the Kalahari" shows this.'},
+{t:'a5',q:'James Scott\'s Seeing Like a State argues states…',o:['Make subjects "legible" through quantification, which can obscure local conditions','Always help locals','Avoid bureaucracy','Use gift exchange'],a:0,e:''},
+{t:'a5',q:'For Mauss, the hau of a gift is…',o:['Its price','Its spirit, which must be returned to keep balance','A tax','A contract'],a:1,e:'Based on Māori exchange; the relationship is as much the object as the item.'},
+{t:'a5',q:'In the Kula ring, mwali (armbands) move ___ and soulava (necklaces) move ___.',o:['clockwise, counter-clockwise','counter-clockwise, clockwise','both clockwise','randomly'],a:1,e:'Kula items can only be traded for each other and must keep moving.'},
+{t:'a5',q:'A commodity is…',o:['A gift with a spirit','A good with uniform value regardless of source or producer','Always handmade','A Kula item'],a:1,e:'Oil, soy, gold, lumber.'},
+{t:'a5',q:'Matsutake mushrooms (Tsing) show that goods…',o:['Always stay commodities','Can move from non-monetary value, to commodity, to gift','Have no social meaning','Are only sold in Oregon'],a:1,e:'Foraged in Oregon → graded in markets → given as gifts in Japan.'},
+{t:'a5',q:'Haiti\'s poverty is linked in lecture to…',o:['Its origin in a slave revolt, then ostracism and lack of trade/recognition','Natural disasters only','Its culture','Overpopulation'],a:0,e:'Paul Farmer studied the HIV epidemic there.'},
+{t:'a5',q:'Anthropology defines an economy as…',o:['The stock market','How societies create, exchange and distribute value — first of all a social practice','Only money','Government budgets'],a:1,e:'Politics = how we create, exchange and distribute POWER.'},
+// ---------- SOCIOLOGY ----------
+{t:'s1',q:'C. Wright Mills\' "sociological imagination" is…',o:['Daydreaming about society','Awareness of the link between personal experience and the wider society that shapes it','A research method','A theory of crime'],a:1,e:'1959.'},
+{t:'s1',q:'Agency vs structure:',o:['Agency = social patterns; structure = choices','Agency = people\'s capacity to choose; structure = the framework of patterns shaping interaction','Same thing','Both are norms'],a:1,e:''},
+{t:'s1',q:'Macrosociology studies…',o:['Small group interactions','Trends among and between large groups/societies','Individuals\' brains','Single families'],a:1,e:''},
+{t:'s1',q:'Who coined positivism?',o:['Marx','Auguste Comte','Weber','Durkheim'],a:1,e:'Martineau was the first female sociologist.'},
+{t:'s1',q:'Verstehen (interpretive understanding) is associated with…',o:['Durkheim','Max Weber','Comte','Marx'],a:1,e:'Weber also wrote The Protestant Ethic and the Spirit of Capitalism.'},
+{t:'s1',q:'Durkheim is known for…',o:['Social facts and anomie','Class struggle','Dramaturgy','The looking-glass self'],a:0,e:''},
+{t:'s1',q:'Robert Merton distinguished manifest functions from…',o:['Latent functions','Mores','Agency','Norms'],a:0,e:'Manifest = easily observed/intended; latent = unintended; latent dysfunctions = unintended harm.'},
+{t:'s1',q:'Conflict theory (Marx) centres on…',o:['Social harmony','Class struggle between bourgeoisie and proletariat','Symbols','Small groups'],a:1,e:'Bourgeoisie own the means of production.'},
+{t:'s1',q:'Symbolic interactionism is…',o:['A macro theory','A micro theory of how people act based on meanings created in interaction','Marxist','Positivist'],a:1,e:'Mead, Blumer, Goffman (dramaturgy).'},
+{t:'s2',q:'Deductive reasoning moves from…',o:['Data to theory','Theory to hypothesis to data','Interviews to theory','Opinion to fact'],a:1,e:'Inductive (and grounded theory) moves from data to theory.'},
+{t:'s2',q:'Operationalization means…',o:['Running an experiment','Defining an abstract concept in measurable terms','Getting ethics approval','Sampling'],a:1,e:'E.g., "social class" measured by education, income, occupation.'},
+{t:'s2',q:'A correlation that is actually caused by a third variable is…',o:['Causal','Spurious','Negative','Positive'],a:1,e:''},
+{t:'s2',q:'Qualitative methods typically…',o:['Use predefined variables and statistics','Begin with open-ended questions via interviews, focus groups, content analysis','Require random samples','Are never used'],a:1,e:''},
+{t:'s2',q:'Canada\'s ethics standard for research with humans is…',o:['The Belmont Report','The Tri-Council Policy Statement','The Charter','The IRB Act'],a:1,e:'Reviewed by Research Ethics Boards (REBs); requires informed consent.'},
+{t:'s2',q:'Laud Humphreys\' Tearoom Trade used which role to observe?',o:['Police officer','"Watchqueen" (lookout)','Interviewer','Survey designer'],a:1,e:''},
+{t:'s2',q:'Humphreys\' main ethical problem was…',o:['Too small a sample','Deception: tracing licence plates and interviewing men under false pretenses','Using surveys','Publishing too late'],a:1,e:'He added them to a health survey, changed his appearance, and waited a year.'},
+{t:'s2',q:'Secondary analysis uses…',o:['New interviews','Data already collected by others','Experiments','Participant observation'],a:1,e:''},
+{t:'s3',q:'Folkways are…',o:['Strictly enforced, codified rules','Informal norms like etiquette, not strictly enforced','So strong that even thinking of breaking them disgusts','Laws'],a:1,e:'Mores = formal and seriously enforced (theft, murder). Taboos = strongest (cannibalism, incest).'},
+{t:'s3',q:'Cannibalism or incest violates…',o:['Folkways','Mores','Taboos','Prescriptive norms'],a:2,e:''},
+{t:'s3',q:'Bourdieu\'s cultural capital refers to…',o:['Money','Non-financial assets like education, taste and style that give advantage','Cities','Mass media'],a:1,e:'Habitus = deeply ingrained habits and dispositions.'},
+{t:'s3',q:'The Sapir-Whorf hypothesis says…',o:['Language structures how we perceive the world','Culture is genetic','All languages are the same','Norms are universal'],a:0,e:'Strong form = linguistic determinism; weak form = linguistic relativity.'},
+{t:'s3',q:'Preferring other cultures over your own is…',o:['Ethnocentrism','Xenocentrism','Cultural relativism','Culture shock'],a:1,e:''},
+{t:'s3',q:'A counterculture…',o:['Is a small group within the mainstream','Actively rejects and opposes mainstream values','Is high culture','Is popular culture'],a:1,e:'A subculture differs but doesn\'t reject.'},
+{t:'s3',q:'Baudrillard is associated with…',o:['Habitus','Simulacra','Strain theory','Anomie'],a:1,e:''},
+{t:'s4',q:'Cooley\'s looking-glass self involves…',o:['Imagining how we appear, how others judge it, and incorporating those judgements','Mirrors','Genetics','Formal sanctions'],a:0,e:''},
+{t:'s4',q:'Mead\'s "I" vs "Me":',o:['"I" = spontaneous self; "Me" = socialized self from others\' expectations','Same','"Me" is impulsive','"I" is the generalized other'],a:0,e:''},
+{t:'s4',q:'A master status is…',o:['The status that dominates others and shapes identity','Your job title only','An achieved status','A role'],a:0,e:'Ascribed = assigned (e.g., age); achieved = earned.'},
+{t:'s4',q:'Role conflict vs role strain:',o:['Conflict = between different roles; strain = within one role','Same thing','Strain = between roles','Neither involves roles'],a:0,e:'E.g., student vs employee = conflict; too many demands as a student = strain.'},
+{t:'s4',q:'Lareau found middle-class parents use…',o:['Natural growth','Concerted cultivation: organized activities and reasoning','Directives','No strategy'],a:1,e:'Working-class/poor families use the "accomplishment of natural growth". Class mattered more than race.'},
+{t:'s4',q:'Middle-class kids in Lareau\'s study developed…',o:['Distrust of adults','An emerging sense of entitlement with institutions','Less vocabulary','More free time'],a:1,e:''},
+{t:'s4',q:'Prisons and psychiatric hospitals are examples of…',o:['Primary groups','Total institutions (Goffman)','Bureaucracies','Peer groups'],a:1,e:'They often involve resocialization and degradation ceremonies.'},
+{t:'s4',q:'Asch\'s line experiments demonstrated…',o:['Groupthink','Conformity','Social loafing','Facilitation'],a:1,e:'Groupthink = Janis (1972).'},
+{t:'s4',q:'Which is NOT a feature of Weber\'s ideal bureaucracy?',o:['Division of labour','Hierarchy of authority','Personal favouritism','Rules and regulations'],a:2,e:'Impersonality is a feature.'},
+{t:'s4',q:'Preparing for a future role (e.g., studying business before a job) is…',o:['Primary socialization','Anticipatory socialization','Resocialization','Degradation'],a:1,e:''},
+{t:'s5',q:'In Merton\'s strain theory, accepting goals but using illegitimate means is…',o:['Conformity','Innovation','Ritualism','Retreatism'],a:1,e:'Ritualism rejects goals but keeps means; retreatism rejects both; rebellion replaces both.'},
+{t:'s5',q:'Rejecting both cultural goals and legitimate means is…',o:['Innovation','Ritualism','Retreatism','Rebellion'],a:2,e:''},
+{t:'s5',q:'Sutherland\'s differential association theory says crime is…',o:['Genetic','Learned in interaction with intimate groups, like any behaviour','Caused by poverty alone','Random'],a:1,e:''},
+{t:'s5',q:'Hirschi\'s social control theory names four bonds:',o:['Attachment, commitment, involvement, belief','Goals, means, norms, roles','Id, ego, superego, self','Family, school, work, media'],a:0,e:''},
+{t:'s5',q:'Sykes and Matza\'s "techniques of neutralization" are…',o:['Police tactics','Justifications that let offenders rationalize deviance','Types of prisons','Forms of punishment'],a:1,e:''},
+{t:'s5',q:'In The Saints and the Roughnecks, why were the Saints seen as good kids?',o:['They committed less delinquency','Visibility, demeanor, and class-based perceptual bias','They were never caught doing anything','Their parents were police'],a:1,e:'Both gangs had about equal delinquency; social class shaped reactions and later careers.'},
+{t:'s5',q:'Relationship between crime and deviance:',o:['All deviance is crime','All crime is deviant, but not all deviance is crime','They are unrelated','Crime is broader'],a:1,e:''},
+{t:'s5',q:'Informal social control applies sanctions mostly for violating…',o:['Mores','Folkways','Laws','Taboos only'],a:1,e:'Formal social control (police, courts) targets mores and laws.'},
+// ---------- MOS ----------
+{t:'m1',q:'HRM is…',o:['Payroll only','Practices, policies and systems that influence employee attitudes, behaviours and performance toward organizational goals','Hiring only','Legal compliance only'],a:1,e:''},
+{t:'m1',q:'Human capital theory (Becker, Mincer, Schultz) views employees as…',o:['Costs to minimize','Valuable assets — education, skills and experience that are rare and hard to copy','Interchangeable parts','Machines'],a:1,e:'Critics: intangibles alone aren\'t enough without management and motivation.'},
+{t:'m1',q:'The "classical view" of HRM (Taylor\'s scientific management) saw employees as…',o:['Assets','Interchangeable, expendable costs','Partners','Strategists'],a:1,e:''},
+{t:'m1',q:'The Hawthorne Studies (1924–32) studied…',o:['Pay and turnover','The link between work conditions and productivity','Hiring tests','Unions'],a:1,e:'They led to Elton Mayo\'s Human Relations Movement.'},
+{t:'m1',q:'Strategic HRM means…',o:['HR only implements strategy','Including HR in both FORMULATING and IMPLEMENTING strategy','Cutting HR costs','Outsourcing HR'],a:1,e:''},
+{t:'m1',q:'A protean career (Douglas Hall, 1976) is…',o:['Linear, one employer','Self-directed and values-driven, changing direction over time','Government work','Unionized'],a:1,e:''},
+{t:'m1',q:'Employee engagement measures…',o:['Satisfaction with pay','Commitment to and investment in one\'s work','Attendance','Productivity'],a:1,e:'Job satisfaction = fulfilment from appraising job experiences.'},
+{t:'m1',q:'Rynes, Colbert & Brown (2002) found HR professionals\' beliefs…',o:['Matched research closely','Often didn\'t match research findings — habit and fads won out','Were all wrong','Were irrelevant'],a:1,e:'This is the case for Evidence-Based HRM.'},
+{t:'m1',q:'A research hypothesis is…',o:['The knowledge gap','A statement of what you expect the study to show','The data','The method'],a:1,e:'Order: question → hypothesis → methods → findings.'},
+{t:'m2',q:'A job vs a position:',o:['Same thing','A job is a group of TDRs; a position is that job assigned to a specific person in an organization','A position is broader','A job is one task'],a:1,e:'TDRs = tasks, duties, responsibilities.'},
+{t:'m2',q:'KSAOs stand for…',o:['Knowledge, Skills, Abilities, Other characteristics','Keys, Systems, Assets, Outputs','Knowledge, Strategy, Action, Outcomes','None'],a:0,e:''},
+{t:'m2',q:'Job analysis is called…',o:['Optional paperwork','The building block of everything HR does','Only for executives','Payroll'],a:1,e:'It covers job content, context and requirements.'},
+{t:'m2',q:'The class\'s 4-step job analysis process begins with…',o:['Writing the job description','Reviewing relevant background information','Interviewing incumbents','Posting the job'],a:1,e:'Then determine sources → gather and analyze → develop descriptions and specs.'},
+{t:'m2',q:'The NOC is…',o:['A US database','Canada\'s standardized reference for occupational categories','A personality test','A union'],a:1,e:'OaSIS = Canada\'s newer database of HR characteristics for occupations.'},
+{t:'m2',q:'Which SME gives the most accurate data about performing job tasks?',o:['Job analysts','Supervisors','Incumbents','Customers'],a:2,e:'Supervisors = importance of duties; analysts = context and comparison.'},
+{t:'m2',q:'Functional Job Analysis (FJA) rates task statements on…',o:['People, Data, Things','Cognitive, Physical, Social','195 job elements','Abilities only'],a:0,e:'F-JAS (Fleishman) = 73 ability scales in 5 domains; PAQ = 195 elements in 6 categories.'},
+{t:'m2',q:'Job analysis produces two key documents:',o:['Resume and cover letter','Job description and job specification','Org chart and budget','Offer and contract'],a:1,e:'Description = the job (TDRs); specification = the person (KSAOs).'},
+{t:'m2',q:'The PAQ evaluates…',o:['People/Data/Things','195 job elements across 6 categories','73 abilities','Competencies only'],a:1,e:''},
+{t:'m3',q:'Talent acquisition includes…',o:['Recruitment only','Selection only','Both recruitment (attracting) and selection (deciding)','Training'],a:2,e:''},
+{t:'m3',q:'A benefit of internal recruitment is…',o:['New ideas','Quicker and cheaper, boosts engagement, both sides "well known"','Avoids homogeneity','Wider pool'],a:1,e:'External recruitment brings new ideas and avoids a homogeneous workforce.'},
+{t:'m3',q:'A Realistic Job Preview…',o:['Hides the job\'s downsides','Gives an honest picture of the job, raising trust and commitment and reducing turnover','Is a salary offer','Is an interview'],a:1,e:'E.g., the PetSmart and IKEA RJPs.'},
+{t:'m3',q:'The employee value proposition is…',o:['Salary only','The core of an employer brand: the broader benefits of working there','A selection test','A job ad'],a:1,e:''},
+{t:'m3',q:'Reliability means a selection tool…',o:['Measures what it should','Gives consistent results, free from random error','Is legal','Looks fair'],a:1,e:'Types: test-retest, interrater, internal.'},
+{t:'m3',q:'Validity means a selection tool…',o:['Is consistent','Accurately measures what it\'s intended to measure','Is cheap','Is popular'],a:1,e:''},
+{t:'m3',q:'Which validity is judged by SMEs checking that a tool covers job-relevant traits?',o:['Face','Content','Criterion-related','Construct'],a:1,e:'Face validity = the test-taker\'s subjective view.'},
+{t:'m3',q:'Criterion-related validity is shown through…',o:['Convergent and discriminant validation','Concurrent and predictive validation','SME review','Applicant opinion'],a:1,e:'Construct validity uses convergent and discriminant validation.'},
+{t:'m3',q:'Order of the selection process:',o:['Interview → screening → testing','Screening → testing → interviews → background/references → decision','Testing → decision → interview','References first'],a:1,e:''},
+{t:'m3',q:'Referral applicants tend to…',o:['Be lower quality','Be higher quality, have more realistic expectations, and cost less','Quit faster','Be illegal'],a:1,e:''},
+{t:'m3',q:'Face validity is…',o:['Statistical','A subjective judgement from the test-taker\'s view of whether the test seems fair and relevant','Set by SMEs','Predictive'],a:1,e:''},
+{t:'m4',q:'Performance management mainly aims to…',o:['Fire people','Understand, support and improve employee performance to align with strategy','Set pay only','Recruit'],a:1,e:'Session 04 handouts will be posted Oct 22. More questions will arrive with them.'},
+{t:'m4',q:'Evaluating whether training "worked" is…',o:['Optional','A key step of effective training design','Done before training','Only for executives'],a:1,e:''},
+{t:'m4',q:'Rater errors like the halo effect hurt an appraisal\'s…',o:['Cost','Validity and reliability','Legality only','Speed'],a:1,e:''}
+];
+</script>
+<script>// Procedural Math 1228 questions — fresh numbers every time.
+(function(){
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const fact=n=>n<=1?1:n*fact(n-1);
+const P=(n,r)=>fact(n)/fact(n-r);
+const C=(n,r)=>fact(n)/(fact(r)*fact(n-r));
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const frac=(n,d)=>{const g=gcd(n,d);return d/g===1?String(n/g):`${n/g}/${d/g}`};
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function mc(t,q,ans,wrongs,e){
+  const opts=[String(ans)];
+  for(const w of wrongs){const s=String(w);if(!opts.includes(s)&&opts.length<4)opts.push(s)}
+  const num=Number(ans);let k=1;
+  while(opts.length<4&&k<60){
+   let v;
+   if(Number.isFinite(num)){const step=Number.isInteger(num)?(1+R(0,3)):Math.max(0.01,Math.abs(num)*0.15);v=String(Math.round((num+k*(k%2?1:-1)*step)*10000)/10000)}
+   else{const d=R(2,12),n=R(1,d-1);v=frac(n,d)}
+   if(!opts.includes(v)&&!(Number(v)<0))opts.push(v);k++;
+  }
+  const sh=shuffle(opts.slice());return {t,q,o:sh,a:sh.indexOf(String(ans)),e,gen:true};
+}
+const G={
+ h1(){const A=R(12,30),B=R(10,25),AB=R(3,Math.min(A,B)-2),U=A+B-AB+R(2,10);
+  return mc('h1',`In a class of ${U} students, ${A} take French, ${B} take Spanish and ${AB} take both. How many take neither?`,U-(A+B-AB),[U-A-B,U-(A+B),A+B-AB,U-AB],`n(A∪B) = ${A}+${B}−${AB} = ${A+B-AB}. Neither = ${U}−${A+B-AB} = ${U-(A+B-AB)}.`)},
+ h2(){const s=R(3,6),p=R(2,5),d=R(2,4);
+  return mc('h2',`An outfit has a shirt (${s} choices), pants (${p}) and shoes (${d}). How many outfits?`,s*p*d,[s+p+d,s*p+d,s*p],`Multiplication principle: ${s}×${p}×${d} = ${s*p*d}.`)},
+ h2b(){const n=R(3,5);const tot=Math.pow(2,n);
+  return mc('h2',`A coin is flipped ${n} times. How many sequences have at least one head?`,tot-1,[tot,n,tot/2],`Count the opposite: total 2^${n} = ${tot}, minus the 1 all-tails sequence = ${tot-1}.`)},
+ h3(){const n=R(5,8),r=R(2,4);
+  return mc('h3',`How many ways can ${r} distinct prizes be awarded to ${n} people (no one wins twice)?`,P(n,r),[C(n,r),Math.pow(n,r),n*r],`Order matters → P(${n},${r}) = ${n}!/(${n}−${r})! = ${P(n,r)}.`)},
+ h3b(){const n=R(5,8);
+  return mc('h3',`In how many ways can ${n} people sit around a circular table?`,fact(n-1),[fact(n),fact(n-2),n],`Circular permutations: (n−1)! = ${n-1}! = ${fact(n-1)}.`)},
+ h4(){const n=R(7,12),r=R(2,4);
+  return mc('h4',`A committee of ${r} is chosen from ${n} people. How many committees are possible?`,C(n,r),[P(n,r),n*r,Math.pow(2,n)],`Order doesn't matter → C(${n},${r}) = ${C(n,r)}.`)},
+ h4b(){const m=R(4,7),w=R(4,7);
+  return mc('h4',`Choose a committee of 2 men and 2 women from ${m} men and ${w} women.`,C(m,2)*C(w,2),[C(m+w,4),C(m,2)+C(w,2),P(m,2)*P(w,2)],`C(${m},2)×C(${w},2) = ${C(m,2)}×${C(w,2)} = ${C(m,2)*C(w,2)}.`)},
+ h5(){const a=R(2,3),b=R(2,3),c=R(1,3),n=a+b+c;const ans=fact(n)/(fact(a)*fact(b)*fact(c));
+  return mc('h5',`${n} students are split into labelled groups of sizes ${a}, ${b} and ${c}. How many ways?`,ans,[fact(n),C(n,a),ans*2],`Multinomial: ${n}!/(${a}!·${b}!·${c}!) = ${ans}.`)},
+ h5b(){const k=R(2,3),n=k*2;const lab=fact(n)/Math.pow(2,k);const ans=lab/fact(k);
+  return mc('h5',`${n} people are split into ${k} UNLABELLED pairs. How many ways?`,ans,[lab,fact(n),C(n,2)],`Labelled: ${n}!/(2!)^${k} = ${lab}. The groups can't be told apart, so divide by ${k}! → ${ans}.`)},
+ h6(){const r=R(2,6),b=R(2,6),n=r+b;
+  return mc('h6',`A bag has ${r} red and ${b} blue marbles. Two are drawn without replacement. P(both red)?`,frac(C(r,2),C(n,2)),[frac(r*r,n*n),frac(r,n),frac(C(b,2),C(n,2))],`Equiprobable: C(${r},2)/C(${n},2) = ${C(r,2)}/${C(n,2)} = ${frac(C(r,2),C(n,2))}.`)},
+ h6b(){const s=R(5,10);
+  return mc('h6',`Two fair dice are rolled. What is P(sum = ${s})?`,frac(6-Math.abs(7-s),36),[frac(1,6),frac(1,36),frac(s,36)],`Of 36 equally likely outcomes, ${6-Math.abs(7-s)} give a sum of ${s}.`)},
+ h7(){const pA=R(3,6)/10,pB=R(3,6)/10,pAB=Math.round(pA*pB*100)/100;
+  return mc('h7',`A and B are independent with P(A)=${pA} and P(B)=${pB}. Find P(A∩B).`,pAB,[Math.round((pA+pB)*100)/100,Math.round((pA+pB-pAB)*100)/100,pA],`Independent → P(A∩B) = P(A)·P(B) = ${pAB}.`)},
+ h7b(){const pAB=R(1,3)/10,pB=R(4,8)/10;const ans=Math.round(pAB/pB*1000)/1000;
+  return mc('h7',`P(A∩B) = ${pAB} and P(B) = ${pB}. Find P(A | B) (to 3 decimals).`,ans,[Math.round(pAB*pB*1000)/1000,Math.round(pB/pAB*1000)/1000,pAB],`P(A|B) = P(A∩B)/P(B) = ${pAB}/${pB} = ${ans}.`)},
+ h8(){const d=R(1,5)/100,sens=R(90,98)/100,fp=R(3,10)/100;const num=d*sens,den=num+(1-d)*fp;const ans=Math.round(num/den*1000)/1000;
+  return mc('h8',`${Math.round(d*100)}% of people have a disease. The test is positive ${Math.round(sens*100)}% of the time if sick, and ${Math.round(fp*100)}% if healthy. P(sick | positive)? (3 dp)`,ans,[sens,Math.round(num*1000)/1000,Math.round((1-ans)*1000)/1000],`Bayes: (${d}·${sens}) / (${d}·${sens} + ${Math.round((1-d)*100)/100}·${fp}) ≈ ${ans}.`)},
+ h9(){const n=R(4,6),k=R(1,n-1);const ans=Math.round(C(n,k)*Math.pow(0.5,n)*10000)/10000;
+  return mc('h9',`A fair coin is tossed ${n} times. P(exactly ${k} heads)? (4 dp)`,ans,[Math.round(Math.pow(0.5,n)*10000)/10000,Math.round(k/n*10000)/10000,Math.round(C(n,k)/n*10000)/10000],`Repeated independent trials: C(${n},${k})(½)^${n} = ${C(n,k)}/${Math.pow(2,n)} = ${ans}.`)}
+};
+const byTopic={};Object.entries(G).forEach(([k,f])=>{const t=k.replace(/b$/,'');(byTopic[t]=byTopic[t]||[]).push(f)});
+window.genMath=t=>{const fs=byTopic[t];return fs?fs[Math.floor(Math.random()*fs.length)]():null};
+})();
+</script>
+<script type="module">
+const sb = window.supabase.createClient('https://zycvparzzdprrdmrcsdf.supabase.co','sb_publishable_ByUhbUzYcepWUwgmO0LbkQ_-Cl0hA8-',{auth:{persistSession:true,storageKey:'loop-auth'}});
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const todayStr=()=>{const d=new Date();return d.toLocaleDateString('en-CA')};
+const dayDiff=(a,b)=>Math.round((new Date(a+'T12:00')-new Date(b+'T12:00'))/864e5);
+const addDays=(s,n)=>{const d=new Date(s+'T12:00');d.setDate(d.getDate()+n);return d.toLocaleDateString('en-CA')};
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+const COURSES=window.COURSES, QS=window.QUESTIONS.map((q,i)=>({...q,id:'q'+i}));
+const TOPIC={};COURSES.forEach(c=>c.topics.forEach(t=>TOPIC[t.id]={...t,course:c}));
+const isMath=t=>t.startsWith('h');
+const ICON={
+ home:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+ cal:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/></svg>',
+ chart:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>',
+ user:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+ bolt:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+ arrow:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+ back:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+ x:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+ star:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
+ fire:'🔥'
+};
+const MASCOT=(size=180,mood='happy')=>`<svg width="${size}" height="${size}" viewBox="0 0 200 200" class="float" aria-hidden="true">
+ <ellipse cx="100" cy="186" rx="58" ry="8" fill="#0000000f"/>
+ <path d="M40 120c0-45 25-82 60-82s60 37 60 82c0 38-25 58-60 58s-60-20-60-58z" fill="#8B6CF0"/>
+ <path d="M58 70c8-20 24-32 42-32 6 0 12 1 17 4-25 2-45 18-52 44z" fill="#fff" opacity=".18"/>
+ <circle cx="100" cy="92" r="30" fill="#fff"/><circle cx="${mood==='think'?94:104}" cy="${mood==='think'?86:94}" r="15" fill="#1F1D2B"/><circle cx="${mood==='think'?99:109}" cy="${mood==='think'?81:89}" r="5" fill="#fff"/>
+ ${mood==='sad'?'<path d="M84 140q16-10 32 0" stroke="#1F1D2B" stroke-width="5" fill="none" stroke-linecap="round"/>':'<path d="M80 134q20 18 40 0" stroke="#1F1D2B" stroke-width="5" fill="#E8657A" stroke-linecap="round"/>'}
+ <path d="M66 52 88 30l8 16 14-18 6 20 20-14-6 26" fill="#FBD34D" stroke="#1F1D2B" stroke-width="3" stroke-linejoin="round"/>
+ <rect x="112" y="128" width="54" height="40" rx="6" fill="#3FB27F" transform="rotate(-12 139 148)"/><rect x="117" y="133" width="44" height="30" rx="4" fill="#fff" transform="rotate(-12 139 148)"/>
+ <path d="M126 148h26M126 155h18" stroke="#3FB27F" stroke-width="3" stroke-linecap="round" transform="rotate(-12 139 148)"/>
+ <circle cx="44" cy="134" r="12" fill="#8B6CF0"/><circle cx="160" cy="146" r="12" fill="#8B6CF0"/>
+</svg>`;
+const SPARK=`<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12 0c1 7 5 11 12 12-7 1-11 5-12 12-1-7-5-11-12-12 7-1 11-5 12-12z"/></svg>`;
+
+/* ---------- state ---------- */
+const BLANK={name:'',onboarded:false,q:{},topic:{},log:{},xp:0,best:0,settings:{len:8,timer:true,sound:true},diag:{},updated:0};
+let S=Object.assign(structuredClone(BLANK),store.get('loop-state',{}));
+let user=null, view={tab:'home',filter:'all',course:null,authMode:'up'};
+let syncT=null;
+function save(){S.updated=Date.now();store.set('loop-state',S);if(user){clearTimeout(syncT);syncT=setTimeout(push,1200)}}
+async function push(){if(!user)return;await sb.from('studybuddy_progress').upsert({user_id:user.id,display_name:S.name,state:S,updated_at:new Date().toISOString()})}
+async function pull(){
+ const {data}=await sb.from('studybuddy_progress').select('state').eq('user_id',user.id).maybeSingle();
+ if(data?.state && (data.state.updated||0)>(S.updated||0)){S=Object.assign(structuredClone(BLANK),data.state);store.set('loop-state',S)}
+ else push();
+}
+
+/* ---------- learning model ---------- */
+// Leitner boxes 0..4 per question; topic mastery blends box levels + recent accuracy
+function topicMastery(tid){
+ const ts=S.topic[tid]||{n:0,ok:0,ew:0};
+ if(isMath(tid)) return ts.n? Math.min(1,ts.ew*Math.min(1,ts.n/6)) : 0;
+ const qs=QS.filter(q=>q.t===tid); if(!qs.length) return 0;
+ const sum=qs.reduce((a,q)=>a+Math.min(4,(S.q[q.id]?.box||0))/4,0);
+ return sum/qs.length;
+}
+const seen=tid=>(S.topic[tid]?.n||0)>0;
+function topicStatus(t){
+ const m=topicMastery(t.id), due=t.date<=todayStr();
+ if(!due) return {k:'soon',label:'Upcoming',m};
+ if(!seen(t.id)) return {k:'new',label:'Not started',m};
+ if(m<0.6) return {k:'behind',label:'Behind',m};
+ return {k:'ok',label:'On track',m};
+}
+function courseStats(c){
+ const due=c.topics.filter(t=>t.date<=todayStr());
+ const know=due.length?due.reduce((a,t)=>a+topicMastery(t.id),0)/due.length:0;
+ const total=c.topics.reduce((a,t)=>a+topicMastery(t.id),0)/c.topics.length;
+ const behind=due.filter(t=>topicMastery(t.id)<0.6).length;
+ const next=c.exams.map(e=>({...e,days:dayDiff(e.date,todayStr())})).filter(e=>e.days>=0).sort((a,b)=>a.days-b.days)[0];
+ return {due:due.length,total:c.topics.length,know,overall:total,behind,next};
+}
+/* ---- memory model (forgetting curve) ----
+ Each study day on a topic is a "review" event storing your accuracy level then (lv).
+ Memory decays: R(t) = lv * exp(-(days since review)/stability). Each successful review
+ makes memory more stable (decays slower); a weak review barely helps. */
+function revEvents(tid){return (S.rev&&S.rev[tid])||[]}
+function retentionAt(tid,date){
+ const ev=revEvents(tid).filter(e=>e.d<=date);if(!ev.length)return 0;
+ let stab=1.5,lv=0,last=ev[0].d;
+ for(const e of ev){
+  const gap=dayDiff(e.d,last), r=lv*Math.exp(-gap/stab);
+  stab = e.lv>=0.7 ? stab*(gap>=1?2.2:1.3) : Math.max(1.5,stab*0.8);
+  lv=Math.max(e.lv, r); last=e.d;
+ }
+ return lv*Math.exp(-dayDiff(date,last)/stab);
+}
+function courseMemory(c,date){
+ const ts=c.topics.filter(t=>t.date<=date);if(!ts.length)return null;
+ return ts.reduce((a,t)=>a+retentionAt(t.id,date),0)/ts.length;
+}
+function predictScore(c,exam){
+ const ts=c.topics.filter(t=>t.date<=exam.date);if(!ts.length)return 0;
+ return ts.reduce((a,t)=>a+retentionAt(t.id,exam.date<todayStr()?exam.date:exam.date),0)/ts.length;
+}
+function memoryChart(c,{back=21,fwd=14,h=190}={}){
+ const today=todayStr(),days=[...Array(back+fwd+1)].map((_,i)=>addDays(today,i-back));
+ const cs=c?[c]:myCourses();
+ const pt=d=>{const v=cs.map(x=>courseMemory(x,d)).filter(v=>v!==null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0};
+ const vals=days.map(pt), W=640, H=h, padL=34,padB=26,padT=14, iw=W-padL-8, ih=H-padB-padT;
+ const X=i=>padL+i/(days.length-1)*iw, Y=v=>padT+(1-v)*ih;
+ const tids=new Set(cs.flatMap(x=>x.topics.map(t=>t.id)));
+ const revDays=new Set(Object.entries(S.rev||{}).filter(([t])=>tids.has(t)).flatMap(([,ev])=>ev.map(e=>e.d)));
+ const exams=cs.flatMap(x=>x.exams).filter(e=>days.includes(e.date));
+ const ti=back, pathOf=(a,b)=>vals.slice(a,b+1).map((v,k)=>`${k?'L':'M'}${X(a+k).toFixed(1)},${Y(v).toFixed(1)}`).join('');
+ const area=`${pathOf(0,ti)}L${X(ti)},${Y(0)}L${X(0)},${Y(0)}Z`;
+ // drops: days where memory fell >= 4 points over 3 days without revision
+ let drop=null;for(let i=ti;i>=3;i--){if(vals[i-3]-vals[i]>=0.04&&![...Array(3)].some((_,k)=>revDays.has(days[i-k]))){drop=i;break}}
+ const id='g'+Math.random().toString(36).slice(2,7);
+ return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Memory over time" style="display:block;overflow:visible">
+  <defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7C5CD6" stop-opacity=".35"/><stop offset="1" stop-color="#7C5CD6" stop-opacity="0"/></linearGradient></defs>
+  ${[0,.25,.5,.75,1].map(v=>`<line x1="${padL}" x2="${W-8}" y1="${Y(v)}" y2="${Y(v)}" stroke="#0000000d"/><text x="${padL-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="#7C7891">${v*100}%</text>`).join('')}
+  <rect x="${X(ti)}" y="${padT}" width="${W-8-X(ti)}" height="${ih}" fill="#F4F1FA" opacity=".7"/>
+  <text x="${(X(ti)+W-8)/2}" y="${padT+12}" text-anchor="middle" font-size="10" fill="#7C7891">if you stop revising</text>
+  ${exams.map(e=>{const i=days.indexOf(e.date);return `<line x1="${X(i)}" x2="${X(i)}" y1="${padT}" y2="${padT+ih}" stroke="#E8657A" stroke-dasharray="3 3"/><text x="${X(i)}" y="${padT+ih+22}" text-anchor="middle" font-size="10" font-weight="700" fill="#E8657A">EXAM</text>`}).join('')}
+  <path d="${area}" fill="url(#${id})"/>
+  <path d="${pathOf(0,ti)}" fill="none" stroke="#7C5CD6" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="${pathOf(ti,days.length-1)}" fill="none" stroke="#7C5CD6" stroke-width="2.5" stroke-dasharray="5 5" stroke-linecap="round"/>
+  ${days.map((d,i)=>revDays.has(d)&&i<=ti?`<circle cx="${X(i)}" cy="${Y(vals[i])}" r="5" fill="#3FB27F" stroke="#fff" stroke-width="2"><title>Revised ${d}</title></circle>`:'').join('')}
+  ${drop!==null?`<circle cx="${X(drop)}" cy="${Y(vals[drop])}" r="5" fill="#E8657A" stroke="#fff" stroke-width="2"/><text x="${X(drop)}" y="${Y(vals[drop])+18}" text-anchor="middle" font-size="10" font-weight="700" fill="#E8657A">fading</text>`:''}
+  <circle cx="${X(ti)}" cy="${Y(vals[ti])}" r="7" fill="#1F1D2B" stroke="#fff" stroke-width="3"/>
+  <text x="${X(ti)}" y="${Y(vals[ti])-14}" text-anchor="middle" font-size="12" font-weight="700" fill="#1F1D2B">${Math.round(vals[ti]*100)}%</text>
+  ${[0,Math.round(back/2),ti,days.length-1].map(i=>`<text x="${X(i)}" y="${padT+ih+16}" text-anchor="middle" font-size="10" fill="#7C7891">${i===ti?'Today':new Date(days[i]+'T12:00').toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</text>`).join('')}
+ </svg>
+ <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px;font-weight:500;margin-top:6px"><span class="row" style="gap:5px"><i style="width:10px;height:10px;border-radius:50%;background:#3FB27F"></i>Revised</span><span class="row" style="gap:5px"><i style="width:10px;height:10px;border-radius:50%;background:#E8657A"></i>Fading</span><span class="row" style="gap:5px"><i style="width:16px;border-top:2px dashed #7C5CD6"></i>Forecast</span></div>`;
+}
+function myCourses(){const ids=S.courses&&S.courses.length?S.courses:COURSES.map(c=>c.id);return COURSES.filter(c=>ids.includes(c.id))}
+
+function record(q,ok,sec){
+ const t=todayStr();
+ if(!q.gen){const r=S.q[q.id]||{box:0,due:t};r.box=ok?Math.min(4,r.box+1):0;r.due=addDays(t,[0,1,3,7,14][r.box]);r.last=t;S.q[q.id]=r}
+ const ts=S.topic[q.t]||{n:0,ok:0,ew:0};ts.n++;ts.ok+=ok?1:0;ts.ew=ts.n===1?(ok?1:0):ts.ew*0.7+(ok?0.3:0);S.topic[q.t]=ts;
+ S.rev=S.rev||{};const ev=S.rev[q.t]=S.rev[q.t]||[];let e=ev[ev.length-1];
+ if(!e||e.d!==t){e={d:t,n:0,ok:0,lv:0};ev.push(e)}e.n++;e.ok+=ok?1:0;
+ e.lv=Math.round(Math.max(0.15,Math.min(ts.ew,(e.ok+1)/(e.n+2)*1.15))*100)/100;
+ const L=S.log[t]||{n:0,ok:0,sec:0};L.n++;L.ok+=ok?1:0;L.sec+=Math.min(sec,120);S.log[t]=L;
+ S.xp+=ok?10:3;save();
+}
+function streak(){let s=0,d=todayStr();if(!S.log[d])d=addDays(d,-1);while(S.log[d]?.n>=5){s++;d=addDays(d,-1)}return s}
+function pickQ(tid){
+ if(isMath(tid)) return window.genMath(tid);
+ const t=todayStr(), pool=QS.filter(q=>q.t===tid);
+ const due=pool.filter(q=>!S.q[q.id]||S.q[q.id].due<=t);
+ const src=due.length?due:pool;
+ src.sort((a,b)=>(S.q[a.id]?.box||0)-(S.q[b.id]?.box||0)+Math.random()-.5);
+ return src[0];
+}
+// Daily set: weak + due topics first, boosted by exam proximity
+function buildDaily(courseId,n=S.settings.len){
+ const today=todayStr(), w=[];
+ (courseId?COURSES:myCourses()).filter(c=>!courseId||c.id===courseId).forEach(c=>{
+  const st=courseStats(c); const boost=st.next? Math.max(1,4-st.next.days/5):1;
+  c.topics.forEach(t=>{
+   if(t.date>today && !courseId) return;
+   if(isMath(t.id)||QS.some(q=>q.t===t.id)){
+    const m=topicMastery(t.id); const up=t.date>today?0.3:1;
+    w.push({tid:t.id,w:(1.15-m)*boost*up+(seen(t.id)?0:.4)});
+   }
+  });
+ });
+ const out=[],used=new Set();let guard=0;
+ while(out.length<n&&w.length&&guard++<200){
+  const tot=w.reduce((a,x)=>a+x.w,0);let r=Math.random()*tot,pick=w[0];
+  for(const x of w){r-=x.w;if(r<=0){pick=x;break}}
+  const q=pickQ(pick.tid); if(!q) continue;
+  const key=q.gen?q.q:q.id; if(used.has(key)) continue; used.add(key); out.push(q); pick.w*=0.55;
+ }
+ return out;
+}
+function buildDiag(courseId){
+ const c=COURSES.find(x=>x.id===courseId);
+ return c.topics.filter(t=>t.date<=todayStr()).flatMap(t=>{const a=pickQ(t.id);const b=isMath(t.id)?null:pickQ(t.id);return [a,b&&b.id!==a?.id?b:null].filter(Boolean)}).slice(0,12);
+}
+
+/* ---------- render ---------- */
+const root=$('#root');
+function toast(m){const el=document.createElement('div');el.className='toast';el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),2200)}
+function ring(p,c){return `<div class="ring" style="--p:${Math.round(p*100)};--c:${c||'var(--lavd)'}"><span>${Math.round(p*100)}%</span></div>`}
+function goBtn(p){const C=2*Math.PI*31;return `<div class="go"><svg class="ring" width="66" height="66" viewBox="0 0 66 66"><circle cx="33" cy="33" r="31" fill="none" stroke="#7C5CD6" stroke-width="3" stroke-dasharray="${C*p} ${C}" stroke-linecap="round" transform="rotate(-90 33 33)"/></svg>${ICON.arrow}</div>`}
+const colVar={mint:'var(--mintd)',lav:'var(--lavd)',peach:'var(--peachd)',sky:'var(--skyd)',lemon:'var(--lemond)'};
+
+function render(){
+ if(!S.onboarded) return renderHero();
+ if(!S.name) return renderName();
+ if(!S.picked) return renderPick();
+ const tabs=[['home','Home',ICON.home],['plan','Plan',ICON.cal],['stats','Progress',ICON.chart],['me','Profile',ICON.user]];
+ let body='';
+ if(view.course) body=renderCourse(); else body={home:renderHome,plan:renderPlan,stats:renderStats,me:renderMe}[view.tab]();
+ root.innerHTML=`<div class="app">
+  <aside class="side"><div class="brand">${MASCOT(36)} Loop</div>
+   ${tabs.map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!view.course?'on':''}">${i}${l}</button>`).join('')}
+   <div style="margin-top:auto"><button class="btn full" data-act="daily">${ICON.bolt} Daily practice</button></div></aside>
+  <main class="main">${body}</main></div>
+  <nav class="nav">
+   ${tabs.slice(0,2).map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!view.course?'on':''}">${i}${l}</button>`).join('')}
+   <button class="mid" data-act="daily" aria-label="Start daily practice">${ICON.bolt}</button>
+   ${tabs.slice(2).map(([k,l,i])=>`<button data-tab="${k}" class="${view.tab===k&&!view.course?'on':''}">${i}${l}</button>`).join('')}
+  </nav>`;
+ requestAnimationFrame(()=>document.querySelectorAll('[data-w]').forEach(e=>e.style.width=e.dataset.w));
+ requestAnimationFrame(()=>document.querySelectorAll('[data-h]').forEach(e=>e.style.height=e.dataset.h));
+}
+
+function renderHero(){
+ root.innerHTML=`<div class="hero">
+  <div class="art"><div style="position:absolute;top:calc(40px + var(--safe-t));left:30px;opacity:.9">${SPARK}</div><div style="position:absolute;top:calc(90px + var(--safe-t));right:40px;transform:scale(1.6)">${SPARK}</div><div style="position:absolute;bottom:30px;left:60px;transform:scale(.7)">${SPARK}</div>${MASCOT(230)}</div>
+  <div class="sheet">
+   <h1>Learning is<br>more <span style="color:var(--lavd)">fun</span> together</h1>
+   <p class="muted" style="margin:0 0 24px;line-height:1.5">Tiny daily quizzes built from your own Western courses. See what you know, what's left, and what's slipping.</p>
+   <div class="row between"><button class="btn" data-act="start">Get Started</button><button class="circ" data-act="start" aria-label="Get started">${ICON.arrow}</button></div>
+   <p class="muted" style="font-size:14px;margin:18px 0 0">Already have an account? <button class="link" data-act="signin">Sign in</button></p>
+  </div></div>`;
+}
+function renderName(){
+ root.innerHTML=`<div class="hero" style="background:var(--mint)"><div class="art">${MASCOT(190,'think')}</div><div class="sheet">
+  <h1 style="font-size:28px">What should I call you?</h1>
+  <input class="field" id="nm" placeholder="Your first name" autocomplete="given-name" value="${esc(S.name||'')}">
+  <button class="btn full" data-act="setname">Continue</button></div></div>`;
+ setTimeout(()=>$('#nm')?.focus(),50);
+}
+function renderPick(){
+ const sel=S.courses||[];
+ root.innerHTML=`<div class="hero" style="background:var(--sky)"><div class="art">${MASCOT(170,'think')}</div><div class="sheet" style="text-align:left">
+  <h1 style="font-size:28px;text-align:left">Which courses are you taking?</h1>
+  <p class="muted" style="margin:0 0 16px;font-size:14px">Western · Fall 2026. You can change this later in Profile.</p>
+  <div class="stack" style="gap:8px">${COURSES.map(c=>`<button class="topic" data-pick="${c.id}" style="text-align:left;border:2px solid ${sel.includes(c.id)?'var(--ink)':'transparent'};background:var(--${c.color})"><span style="font-size:22px">${c.emoji}</span><div style="flex:1"><div class="nm">${esc(c.code)}</div><div style="font-size:13px;opacity:.7">${esc(c.name)}</div></div><span style="font-size:20px">${sel.includes(c.id)?'✓':'+'}</span></button>`).join('')}</div>
+  <button class="btn full" style="margin-top:16px" data-act="pickdone">Continue (${sel.length})</button>
+ </div></div>`;
+}
+function renderAuth(){
+ const up=view.authMode==='up';
+ root.innerHTML=`<div class="hero" style="background:var(--lav)"><div class="art">${MASCOT(170)}</div><div class="sheet" style="text-align:left">
+  <h1 style="font-size:28px;text-align:left">${up?'Create your account':'Welcome back'}</h1>
+  <p class="muted" style="margin:0 0 18px;font-size:14px">Your progress syncs across your phone and laptop.</p>
+  <form id="authf">
+   ${up?'<input class="field" id="an" placeholder="First name" autocomplete="given-name" required>':''}
+   <input class="field" id="ae" type="email" placeholder="Email" autocomplete="email" required>
+   <input class="field" id="ap" type="password" placeholder="Password (6+ characters)" autocomplete="${up?'new-password':'current-password'}" minlength="6" required>
+   <div class="err" id="aerr"></div>
+   <button class="btn full" type="submit">${up?'Sign up':'Sign in'}</button>
+  </form>
+  <p class="muted" style="font-size:14px;text-align:center;margin:16px 0 4px">${up?'Have an account?':'New here?'} <button class="link" data-act="authswap">${up?'Sign in':'Create one'}</button></p>
+  <p style="text-align:center;margin:0"><button class="muted" style="font-size:13px;text-decoration:underline" data-act="guest">Continue without an account</button></p>
+ </div></div>`;
+ $('#authf').onsubmit=async e=>{
+  e.preventDefault();const em=$('#ae').value.trim(),pw=$('#ap').value,err=$('#aerr');err.textContent='';
+  const btn=e.target.querySelector('button');btn.disabled=true;
+  try{
+   if(up){const nm=$('#an').value.trim();const {data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{name:nm}}});if(error)throw error;
+    S.name=S.name||nm;S.onboarded=true;save();
+    if(!data.session){err.style.color='var(--good)';err.textContent='Check your email to confirm, then sign in.';view.authMode='in';btn.disabled=false;return}}
+   else{const {error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error}
+  }catch(x){err.textContent=x.message||'Something went wrong';btn.disabled=false}
+ };
+}
+
+function renderHome(){
+ const st=streak(), today=S.log[todayStr()]||{n:0,ok:0}, goal=S.settings.len;
+ const list=myCourses().filter(c=>view.filter==='all'||c.id===view.filter);
+ const allBehind=myCourses().reduce((a,c)=>a+courseStats(c).behind,0);
+ const soon=myCourses().flatMap(c=>c.exams.map(e=>({...e,c,days:dayDiff(e.date,todayStr())}))).filter(e=>e.days>=0).sort((a,b)=>a.days-b.days)[0];
+ const days=[...Array(7)].map((_,i)=>addDays(todayStr(),i-6)),vals=days.map(d=>S.log[d]?.n||0),mx=Math.max(10,...vals);
+ const ups=myCourses().flatMap(c=>c.exams.map(e=>({...e,c,days:dayDiff(e.date,todayStr())}))).filter(e=>e.days>=0).sort((a,b)=>a.days-b.days);
+ const rail=`<aside class="rail">
+  <div class="card"><div class="row between"><b style="font-weight:600">This week</b><span class="muted" style="font-size:13px">${vals.reduce((a,b)=>a+b,0)} answered</span></div>
+   <div class="chart" style="height:120px">${vals.map((v,i)=>`<div class="col"><div class="b" data-h="${Math.max(10,v/mx*100)}%" style="height:0;background:${i===6?'var(--lavd)':'var(--lav)'}"></div><small>${new Date(days[i]+'T12:00').toLocaleDateString('en-CA',{weekday:'narrow'})}</small></div>`).join('')}</div></div>
+  <div class="card"><b style="font-weight:600">Exams coming up</b><div class="stack" style="margin-top:12px;gap:8px">${ups.map(e=>`<div class="topic" data-cram="${e.c.id}" style="cursor:pointer;background:var(--bg);padding:10px 12px"><span style="font-size:20px">${e.c.emoji}</span><div style="flex:1;min-width:0"><div class="nm" style="font-size:14px">${esc(e.c.code.split(' ').slice(0,2).join(' '))}</div><div class="muted" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.name)}</div></div><span class="tag ${e.days<=7?'behind':'new'}">${e.days===0?'today':e.days+'d'}</span></div>`).join('')}</div></div>
+  <div class="ccard c-mint row" style="cursor:default;gap:12px">${MASCOT(64)}<div style="font-size:14px;line-height:1.45"><b style="font-weight:600">Tip:</b> on a laptop, press <b>1–4</b> to answer and <b>Enter</b> to continue.</div></div>
+ </aside>`;
+ return `<div class="dash"><div>
+ <div class="row between">
+  <div class="row"><div class="avatar">${esc(S.name[0]||'?').toUpperCase()}</div>
+   <div><div style="font-weight:600;font-size:18px">Hey ${esc(S.name)}! 👋</div>
+   <div class="row" style="gap:8px;margin-top:4px"><span style="font-size:13px" class="muted">${st?`${ICON.fire} ${st}-day streak`:'Start a streak today'}</span></div></div></div>
+  <button class="iconbtn" data-tab="me" aria-label="Profile">${ICON.user}</button>
+ </div>
+ <h1 style="margin-top:22px">Your Progress<br>Today</h1>
+ <div class="ccard c-lav" data-act="daily" style="margin-bottom:14px">
+  <div class="row between"><div class="glyph">⚡</div><span class="chip">${today.n}/${goal} today</span></div>
+  <div style="margin-top:14px;font-size:13px;font-weight:600;opacity:.6">Daily Practice · ~5 min</div>
+  <div style="font-size:21px;font-weight:600;margin:4px 0 12px;line-height:1.3">${today.n>=goal?'Goal done! Want a bonus round?':allBehind?`${allBehind} topic${allBehind>1?'s':''} slipping, let's fix that`:'Keep everything fresh'}</div>
+  <div class="row between"><div class="bar" style="flex:1;margin-right:14px"><i data-w="${Math.min(100,today.n/goal*100)}%" style="width:0;background:var(--lavd)"></i></div>${goBtn(Math.min(1,today.n/goal))}</div>
+ </div>
+ ${soon?`<div class="card row" style="gap:14px;margin-bottom:6px"><div class="glyph" style="background:var(--${soon.c.color})">${soon.c.emoji}</div><div style="flex:1"><div style="font-weight:600">${soon.days===0?'TODAY':soon.days===1?'Tomorrow':`In ${soon.days} days`} · ${esc(soon.c.code)}</div><div class="muted" style="font-size:14px">${esc(soon.name)}</div></div><button class="btn" style="padding:12px 18px" data-cram="${soon.c.id}">Cram</button></div>`:''}
+ <h2>Your courses</h2>
+ <div class="pills">
+  <button class="pill ${view.filter==='all'?'on':''}" data-filter="all">All <b>${myCourses().length}</b></button>
+  ${myCourses().map(c=>`<button class="pill ${view.filter===c.id?'on':''}" data-filter="${c.id}">${c.emoji} ${c.code.split(' ')[0]}</button>`).join('')}
+ </div>
+ <div class="grid2" style="margin-top:14px">
+ ${list.map(c=>{const s=courseStats(c);return `
+  <div class="ccard c-${c.color}" data-course="${c.id}">
+   <div class="sparkle">✦</div>
+   <div class="row between"><div class="glyph">${c.emoji}</div><span class="chip">${ICON.star} ${Math.round(s.know*100)}% known</span></div>
+   <div style="margin-top:14px;font-size:13px;font-weight:600;opacity:.6">${esc(c.code)}</div>
+   <div style="font-size:20px;font-weight:600;margin:2px 0 12px">${esc(c.name)}</div>
+   <div class="row between">
+    <div style="font-size:13px;line-height:1.6">
+     <div><b>${s.due}</b>/${s.total} topics taught so far</div>
+     <div>${s.behind?`<span style="color:var(--bad);font-weight:600">${s.behind} behind</span>`:'<span style="color:var(--good);font-weight:600">On track ✓</span>'}${s.next?` · exam in ${s.next.days}d`:''}</div>
+     ${s.next?`<div>Predicted test score: <b>${Math.round(predictScore(c,s.next)*100)}%</b></div>`:''}
+    </div>${goBtn(s.know)}
+   </div>
+  </div>`}).join('')}
+ </div></div>${rail}</div>`;
+}
+
+function renderCourse(){
+ const c=COURSES.find(x=>x.id===view.course), s=courseStats(c);
+ return `
+ <div class="row between"><button class="iconbtn" data-act="back" aria-label="Back">${ICON.back}</button><span class="chip" style="background:var(--${c.color})">${c.emoji} ${esc(c.code)}</span></div>
+ <h1 style="margin-top:20px">${esc(c.name)}</h1>
+ ${(()=>{const pred=s.next?predictScore(c,s.next):null, mem=courseMemory(c,todayStr())||0;return `
+ <div class="big3">
+  <div class="stat c-mint"><div class="n">${Math.round(s.know*100)}%</div><div class="l">Knowledge<br><span style="font-weight:400;font-size:11px">of content taught so far</span></div></div>
+  <div class="stat c-lav"><div class="n">${pred===null?'–':Math.round(pred*100)+'%'}</div><div class="l">Predicted test score<br><span style="font-weight:400;font-size:11px">${s.next?'on '+new Date(s.next.date+'T12:00').toLocaleDateString('en-CA',{month:'short',day:'numeric'})+' if you stop now':'no exam scheduled'}</span></div></div>
+  <div class="stat c-peach"><div class="n">${Math.round((1-s.overall)*100)}%</div><div class="l">Still to learn<br><span style="font-weight:400;font-size:11px">${s.behind} topic${s.behind===1?'':'s'} behind</span></div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><div class="row between" style="margin-bottom:8px"><div><b style="font-weight:600">Memory curve</b><div class="muted" style="font-size:13px">Remembered now: ${Math.round(mem*100)}%. It fades without review and jumps when you revise.</div></div></div>${memoryChart(c)}</div>`})()}
+ <div class="row" style="gap:10px;margin-top:14px">
+  <button class="btn" style="flex:1" data-cram="${c.id}">${ICON.bolt} Practice</button>
+  <button class="btn light" style="flex:1" data-diag="${c.id}">Check what I know</button>
+ </div>
+ ${c.exams.map(e=>{const d=dayDiff(e.date,todayStr());return `<div class="card row between" style="margin-top:14px;padding:16px 20px"><div><div style="font-weight:600">${esc(e.name)}</div><div class="muted" style="font-size:14px">${new Date(e.date+'T12:00').toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'})}</div></div><span class="tag ${d<0?'soon':d<=7?'behind':'new'}">${d<0?'done':d===0?'today':d+' days'}</span></div>`}).join('')}
+ <h2>Topics</h2>
+ <div class="stack">
+ ${c.topics.map(t=>{const st=topicStatus(t);return `<div class="topic">${ring(st.m,colVar[c.color])}<div style="flex:1;min-width:0"><div class="nm">${esc(t.name)}</div><div class="muted" style="font-size:12px">${new Date(t.date+'T12:00').toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div></div><span class="tag ${st.k}">${st.label}</span></div>`}).join('')}
+ </div>`;
+}
+
+function renderPlan(){
+ const now=new Date(), ym=view.ym||[now.getFullYear(),now.getMonth()];
+ const first=new Date(ym[0],ym[1],1), start=(first.getDay()+6)%7, days=new Date(ym[0],ym[1]+1,0).getDate();
+ const exams={};myCourses().forEach(c=>c.exams.forEach(e=>(exams[e.date]=exams[e.date]||[]).push({...e,c})));
+ let cells='';const prevDays=new Date(ym[0],ym[1],0).getDate();
+ for(let i=0;i<start;i++)cells+=`<div class="d o">${prevDays-start+i+1}</div>`;
+ for(let d=1;d<=days;d++){const ds=new Date(ym[0],ym[1],d).toLocaleDateString('en-CA');const cls=[ds===todayStr()?'today':exams[ds]?'ex':'',S.log[ds]?.n>=5?'done':''].join(' ');cells+=`<div class="d ${cls}" title="${exams[ds]?exams[ds].map(e=>e.c.code+': '+e.name).join(', '):''}">${d}</div>`}
+ const tail=(7-(start+days)%7)%7;for(let i=1;i<=tail;i++)cells+=`<div class="d o">${i}</div>`;
+ const upcoming=Object.entries(exams).flatMap(([d,a])=>a.map(e=>({...e,d,days:dayDiff(d,todayStr())}))).filter(e=>e.days>=0).sort((a,b)=>a.days-b.days);
+ return `
+ <h1>Learning<br>Schedule Plan</h1>
+ <div class="ccard c-mint" style="cursor:default">
+  <div class="row between" style="margin-bottom:14px"><div class="row"><div class="glyph">${ICON.cal}</div><b style="font-size:18px;font-weight:600">${first.toLocaleDateString('en-CA',{month:'long',year:'numeric'})}</b></div>
+  <div class="row" style="gap:6px"><button class="iconbtn" style="width:42px;height:42px;background:transparent;border:1.5px solid #0002;box-shadow:none" data-month="-1" aria-label="Previous month">‹</button><button class="iconbtn" style="width:42px;height:42px;background:transparent;border:1.5px solid #0002;box-shadow:none" data-month="1" aria-label="Next month">›</button></div></div>
+  <div class="cal">${['M','T','W','T','F','S','S'].map(x=>`<div class="h">${x}</div>`).join('')}${cells}</div>
+  <div class="row" style="gap:14px;margin-top:12px;font-size:12px;font-weight:500"><span class="row" style="gap:5px"><i style="width:10px;height:10px;border-radius:50%;background:var(--lav2)"></i>Exam</span><span class="row" style="gap:5px"><i style="width:6px;height:6px;border-radius:50%;background:var(--mintd)"></i>Practised</span></div>
+ </div>
+ <h2>Coming up</h2>
+ <div class="stack">${upcoming.map(e=>`<div class="topic" data-cram="${e.c.id}" style="cursor:pointer;background:var(--${e.c.color})"><div class="glyph" style="width:46px;height:46px">${e.c.emoji}</div><div style="flex:1"><div class="nm">${esc(e.c.code)} · ${esc(e.name)}</div><div style="font-size:13px;opacity:.7">${e.days===0?'Today':e.days===1?'Tomorrow':`in ${e.days} days`} · ${Math.round(courseStats(e.c).know*100)}% ready</div></div><div class="go" style="width:44px;height:44px">${ICON.arrow}</div></div>`).join('')}</div>`;
+}
+
+function renderStats(){
+ const days=[...Array(7)].map((_,i)=>addDays(todayStr(),i-6));
+ const vals=days.map(d=>S.log[d]?.n||0), mx=Math.max(10,...vals);
+ const cols=['var(--lav2)','var(--lemon)','var(--lav2)','var(--lavd)','var(--lemon)','var(--mint)','var(--lav)'];
+ const total=Object.values(S.log).reduce((a,l)=>a+l.n,0), ok=Object.values(S.log).reduce((a,l)=>a+l.ok,0);
+ const mins=Math.round(days.reduce((a,d)=>a+(S.log[d]?.sec||0),0)/60);
+ const mastered=Object.keys(TOPIC).filter(t=>topicMastery(t)>=0.6).length;
+ return `
+ <h1>Your Progress</h1>
+ ${(()=>{const mc=view.memC?COURSES.find(c=>c.id===view.memC):null;const mem=(mc?[mc]:myCourses()).map(c=>courseMemory(c,todayStr())||0);const avg=mem.reduce((a,b)=>a+b,0)/Math.max(1,mem.length);
+ return `<div class="card" style="margin-bottom:14px">
+  <div class="row between" style="flex-wrap:wrap;gap:10px"><div><b style="font-weight:600;font-size:18px">Memory</b><div class="muted" style="font-size:13px">${Math.round(avg*100)}% of what you've studied is still in your head today</div></div></div>
+  <div class="pills" style="margin:12px 0 4px"><button class="pill ${!view.memC?'on':''}" data-memc="">All</button>${myCourses().map(c=>`<button class="pill ${view.memC===c.id?'on':''}" data-memc="${c.id}">${c.emoji} ${c.code.split(' ')[0]}</button>`).join('')}</div>
+  ${memoryChart(mc,{back:28,fwd:21,h:220})}</div>`})()}
+ <div class="grid2" style="grid-template-columns:1fr 1fr">
+  <div class="stat c-lav"><div style="font-size:13px;font-weight:600;opacity:.7">Topics</div><div class="n" style="font-size:40px;margin-top:6px">${mastered}</div><div class="l">mastered of ${Object.keys(TOPIC).length}</div></div>
+  <div class="stat c-lemon"><div style="font-size:13px;font-weight:600;opacity:.7">Study time</div><div class="n" style="font-size:40px;margin-top:6px">${mins}<span style="font-size:18px">m</span></div><div class="l">this week</div></div>
+ </div>
+ <div class="card" style="margin-top:14px">
+  <div class="row between"><b style="font-weight:600">Questions per day</b><span class="chip" style="background:var(--bg)">This week</span></div>
+  <div class="chart">${vals.map((v,i)=>`<div class="col"><div class="b ${v===Math.max(...vals)&&v>0?'top':''}" data-h="${Math.max(10,v/mx*100)}%" style="height:0;background:${cols[i]}"><span>${v}</span></div><small>${new Date(days[i]+'T12:00').toLocaleDateString('en-CA',{weekday:'short'})}</small></div>`).join('')}</div>
+ </div>
+ <div class="ccard c-mint row" style="margin-top:14px;cursor:default;gap:14px"><div style="font-size:34px">🏆</div><div><b style="font-weight:600">${total?`${Math.round(ok/total*100)}% accuracy`:'No answers yet'}</b><div style="font-size:13px;opacity:.75">${total} questions answered · ${S.xp} XP · best streak ${Math.max(S.best,streak())} days</div></div></div>
+ <h2>Know vs. need to know</h2>
+ <div class="stack">${myCourses().map(c=>{const s=courseStats(c);return `<div class="topic" data-course="${c.id}" style="cursor:pointer">${ring(s.know,colVar[c.color])}<div style="flex:1"><div class="nm">${esc(c.code)}</div><div class="bar" style="background:var(--bg);margin-top:8px"><i data-w="${s.overall*100}%" style="width:0;background:${colVar[c.color]}"></i></div><div class="muted" style="font-size:12px;margin-top:6px">${Math.round(s.overall*100)}% of the whole course · ${s.behind} behind</div></div></div>`}).join('')}</div>`;
+}
+
+function renderMe(){
+ return `
+ <h1>Profile</h1>
+ <div class="card row" style="gap:16px"><div class="avatar" style="width:64px;height:64px;font-size:26px">${esc(S.name[0]||'?').toUpperCase()}</div><div style="flex:1"><div style="font-weight:600;font-size:18px">${esc(S.name)}</div><div class="muted" style="font-size:14px">${user?esc(user.email):'Not signed in · progress saved on this device only'}</div></div></div>
+ ${user?'':`<button class="btn full" style="margin-top:14px" data-act="toauth">Create account to sync</button>`}
+ <button class="btn light full" style="margin-top:14px" data-act="editcourses">Edit my courses (${myCourses().length})</button>
+ <h2>Focus settings</h2>
+ <div class="stack">
+  <div class="topic"><div style="flex:1"><div class="nm">Questions per session</div><div class="muted" style="font-size:12px">Short sessions = easier to start</div></div>
+   <div class="row" style="gap:6px">${[5,8,12].map(n=>`<button class="pill ${S.settings.len===n?'on':''}" data-len="${n}">${n}</button>`).join('')}</div></div>
+  <div class="topic"><div style="flex:1"><div class="nm">Show focus timer</div><div class="muted" style="font-size:12px">A gentle clock, no pressure</div></div><button class="switch ${S.settings.timer?'on':''}" data-set="timer" aria-label="Toggle timer"></button></div>
+  <div class="topic"><div style="flex:1"><div class="nm">Sounds</div><div class="muted" style="font-size:12px">Little dings on right answers</div></div><button class="switch ${S.settings.sound?'on':''}" data-set="sound" aria-label="Toggle sound"></button></div>
+ </div>
+ <h2>Install on your iPhone</h2>
+ <div class="card" style="font-size:14px;line-height:1.6">Open this page in <b>Safari</b>, tap the <b>Share</b> button, then <b>Add to Home Screen</b>. Loop opens full-screen like a regular app.</div>
+ ${user?`<button class="btn light full" style="margin-top:20px" data-act="signout">Sign out</button>`:''}
+ <p class="muted" style="font-size:12px;text-align:center;margin-top:20px">Built from your OWL Brightspace courses · Fall 2026</p>`;
+}
+
+/* ---------- quiz ---------- */
+let Q=null;
+function startQuiz(list,title){
+ if(!list.length) return toast('Nothing to practise here yet');
+ Q={list,title,i:0,res:[],picked:null,t0:Date.now(),qStart:Date.now()};
+ drawQ();
+ clearInterval(Q.tick);Q.tick=setInterval(()=>{const el=$('#qtimer');if(el){const s=Math.floor((Date.now()-Q.t0)/1000);el.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}},1000);
+}
+function drawQ(){
+ let el=$('#quiz');if(!el){el=document.createElement('div');el.id='quiz';el.className='quiz';document.body.appendChild(el)}
+ if(Q.i>=Q.list.length) return drawDone(el);
+ if(Q.i>0&&Q.i%5===0&&!Q.breakShown){Q.breakShown=true;return drawBreak(el)}
+ Q.breakShown=Q.i%5===0?Q.breakShown:false;
+ const q=Q.list[Q.i],t=TOPIC[q.t],c=t.course;
+ el.innerHTML=`
+ <div class="qtop"><button class="iconbtn" data-q="quit" aria-label="Close">${ICON.x}</button>
+  <div class="dots">${Q.list.map((_,j)=>`<i class="${j<Q.i?(Q.res[j]?'ok':'no'):j===Q.i?'d':''}"></i>`).join('')}</div>
+  ${S.settings.timer?'<span class="timer" id="qtimer">0:00</span>':''}</div>
+ <div class="qcard c-${c.color}">
+  <div class="qtag">${c.emoji} ${esc(c.code)} · ${esc(t.name)}</div>
+  <div class="qtext">${esc(q.q)}</div>
+ </div>
+ <div class="opts">${q.o.map((o,j)=>`<button class="opt" data-opt="${j}"><span class="k">${j+1}</span><span>${esc(o)}</span></button>`).join('')}</div>
+ <div id="why"></div>
+ <div class="qfoot"><button class="btn full" id="nextb" data-q="next" style="visibility:hidden">Continue ${ICON.arrow}</button></div>
+ <div class="kbd">Press <b>1</b><b>2</b><b>3</b><b>4</b> to answer · <b>Enter</b> to continue · <b>Esc</b> to stop</div>`;
+ Q.picked=null;Q.qStart=Date.now();
+}
+function answer(j){
+ if(Q.picked!==null)return;const q=Q.list[Q.i];Q.picked=j;const ok=j===q.a;Q.res[Q.i]=ok;
+ record(q,ok,(Date.now()-Q.qStart)/1000);
+ document.querySelectorAll('.opt').forEach((b,k)=>{b.classList.add(k===q.a?'ok':k===j?'no':'dim')});
+ const praise=['Nice!','Nailed it!','Yes! 🎉','Brain power 💪','Exactly right'];const soft=['Not quite','Close one','Almost','Good try'];
+ $('#why').innerHTML=`<div class="why"><b style="color:${ok?'var(--good)':'var(--bad)'}">${ok?praise[Math.random()*praise.length|0]:soft[Math.random()*soft.length|0]+' · it\'s '+esc(q.o[q.a])}</b>${esc(q.e||'')}</div>`;
+ $('#nextb').style.visibility='visible';$('#nextb').focus({preventScroll:true});
+ if(S.settings.sound) beep(ok);
+ if(navigator.vibrate) navigator.vibrate(ok?15:[30,40,30]);
+}
+function drawBreak(el){
+ const ok=Q.res.filter(Boolean).length;
+ el.innerHTML=`<div style="margin:auto;text-align:center;max-width:360px">${MASCOT(170)}<h1 style="text-align:center;font-size:28px">Brain break 🌿</h1><p class="muted" style="line-height:1.5">${ok}/${Q.i} so far. Stretch, sip some water and breathe out slowly. Ready when you are.</p><button class="btn full" data-q="resume" style="margin-top:10px">Keep going ${ICON.arrow}</button><button class="muted" style="margin-top:14px;font-size:14px" data-q="finish">End here, that counts too</button></div>`;
+}
+function drawDone(el){
+ clearInterval(Q.tick);
+ const ok=Q.res.filter(Boolean).length,n=Q.res.length,pct=n?ok/n:0;
+ const st=streak();S.best=Math.max(S.best,st);save();
+ const weak=[...new Set(Q.list.filter((q,i)=>Q.res[i]===false).map(q=>TOPIC[q.t].name))].slice(0,3);
+ el.innerHTML=`<div style="margin:auto;text-align:center;max-width:380px;width:100%">${MASCOT(160,pct<.5?'sad':'happy')}
+  <h1 style="text-align:center;font-size:30px;margin-bottom:6px">${pct>=.8?'Amazing!':pct>=.5?'Solid work!':'You showed up, that\'s the win'}</h1>
+  <p class="muted" style="margin:0 0 18px">${ok}/${n} correct · +${ok*10+(n-ok)*3} XP${st?` · ${ICON.fire} ${st}-day streak`:''}</p>
+  ${weak.length?`<div class="card" style="text-align:left;margin-bottom:14px"><b style="font-weight:600">Revisit next time</b><div class="muted" style="font-size:14px;margin-top:6px;line-height:1.6">${weak.map(esc).join('<br>')}</div></div>`:''}
+  <button class="btn full" data-q="close">Done</button>
+  <button class="btn light full" style="margin-top:10px" data-q="again">One more round</button></div>`;
+ if(pct>=.6) confetti();
+}
+function beep(ok){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=ok?880:220;o.type='sine';g.gain.setValueAtTime(.08,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.25);o.start();o.stop(a.currentTime+.25)}catch{}}
+function confetti(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const c=document.createElement('canvas');c.className='confetti';c.width=innerWidth;c.height=innerHeight;document.body.appendChild(c);const x=c.getContext('2d');const cols=['#B9A3E6','#7C5CD6','#CFE7E0','#FBEBB0','#FBDCCB','#3FB27F'];const P=[...Array(120)].map(()=>({x:innerWidth/2,y:innerHeight/2.5,vx:(Math.random()-.5)*14,vy:Math.random()*-14-4,s:Math.random()*8+4,c:cols[Math.random()*6|0],r:Math.random()*6}));let f=0;(function loop(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.vy+=.4;p.x+=p.vx;p.y+=p.vy;p.r+=.1;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});if(f++<120)requestAnimationFrame(loop);else c.remove()})()}
+function closeQuiz(){clearInterval(Q?.tick);$('#quiz')?.remove();Q=null;render()}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button,[data-course],[data-cram],[data-act]');if(!b)return;const d=b.dataset;
+ if(d.opt!==undefined) return answer(+d.opt);
+ if(d.q){({next:()=>{Q.i++;drawQ()},quit:()=>{if(Q.res.length)drawDone($('#quiz'));else closeQuiz()},resume:drawQ,finish:()=>{Q.list=Q.list.slice(0,Q.i);drawQ()},close:closeQuiz,again:()=>{const t=Q.title;closeQuiz();startQuiz(buildDaily(),t)}})[d.q]?.();return}
+ if(d.tab){view.tab=d.tab;view.course=null;render();scrollTo(0,0);return}
+ if(d.filter){view.filter=d.filter;render();return}
+ if(d.memc!==undefined){view.memC=d.memc||null;render();return}
+ if(d.pick){S.courses=S.courses||[];const i=S.courses.indexOf(d.pick);i>=0?S.courses.splice(i,1):S.courses.push(d.pick);save();renderPick();return}
+ if(d.act==='pickdone'){if(!S.courses?.length)return toast('Pick at least one course');S.picked=true;save();render();return}
+ if(d.act==='editcourses'){S.picked=false;save();render();return}
+ if(d.course){view.course=d.course;render();scrollTo(0,0);return}
+ if(d.cram) return startQuiz(buildDaily(d.cram),'Cram');
+ if(d.diag) return startQuiz(buildDiag(d.diag),'Check');
+ if(d.month){const now=new Date(),ym=view.ym||[now.getFullYear(),now.getMonth()];const m=new Date(ym[0],ym[1]+ +d.month,1);view.ym=[m.getFullYear(),m.getMonth()];render();return}
+ if(d.len){S.settings.len=+d.len;save();render();return}
+ if(d.set){S.settings[d.set]=!S.settings[d.set];save();render();return}
+ switch(d.act){
+  case 'start':view.authMode='up';renderAuth();break;
+  case 'signin':view.authMode='in';renderAuth();break;
+  case 'toauth':view.authMode='up';renderAuth();break;
+  case 'authswap':view.authMode=view.authMode==='up'?'in':'up';renderAuth();break;
+  case 'guest':S.onboarded=true;save();render();break;
+  case 'setname':{const v=$('#nm').value.trim();if(!v)return;S.name=v;S.onboarded=true;save();render();break}
+  case 'daily':startQuiz(buildDaily(),'Daily');break;
+  case 'back':view.course=null;render();break;
+  case 'signout':sb.auth.signOut();break;
+ }
+});
+document.addEventListener('keydown',e=>{
+ if(!Q)return;
+ if(['1','2','3','4'].includes(e.key)&&Q.picked===null&&$('.opt')) answer(+e.key-1);
+ else if((e.key==='Enter'||e.key===' ')&&Q.picked!==null&&$('#nextb')){e.preventDefault();Q.i++;drawQ()}
+ else if(e.key==='Escape') $('[data-q="quit"]')?.click();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='nm')$('[data-act="setname"]').click()});
+
+/* ---------- boot ---------- */
+sb.auth.onAuthStateChange(async(ev,session)=>{
+ const was=user?.id;user=session?.user||null;
+ if(ev==='SIGNED_OUT'){S=structuredClone(BLANK);store.set('loop-state',S)}
+ if(user&&S.owner&&S.owner!==user.id){S=structuredClone(BLANK)}
+ if(user){S.owner=user.id}
+ if(user&&was!==user.id){S.onboarded=true;if(!S.name)S.name=user.user_metadata?.name||user.email.split('@')[0];await pull();save()}
+ if(!Q) render();
+});
+render();
+
+</script>
+</body>
+</html>
